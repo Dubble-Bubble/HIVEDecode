@@ -9,16 +9,18 @@ import com.qualcomm.robotcore.hardware.DcMotorEx;
 import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
+import com.qualcomm.robotcore.hardware.VoltageSensor;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
 @Config
 public class Shooter {
 
-        public static double kP, kI, kD, kF;
+        public static double kP = 0.001, kI, kD, kF = 0.00016;
         private PIDController velController;
 
-        private DcMotorEx shooter; private Servo rightHood, leftHood;
+        private DcMotorEx shooter, shooter2; private Servo rightHood, leftHood;
 
         private final double ratio = 32.0/340.0, range = 355;
 
@@ -34,16 +36,30 @@ public class Shooter {
 
         public static double p, i, d;
 
-        public static double targetRPM = 6000;
+        public double targetRPM = 0;
 
-        public Shooter(HardwareMap hardwareMap) {
+        public void setTargetRPM(double rpm) {
+            targetRPM = rpm;
+        }
+
+        VoltageSensor voltageSensor;
+
+        Telemetry telemetry;
+
+        public Shooter(HardwareMap hardwareMap, Telemetry t) {
             shooter = (DcMotorEx) hardwareMap.dcMotor.get("shooter");
+            shooter2 = (DcMotorEx) hardwareMap.dcMotor.get("shooter2");
             rightHood = hardwareMap.servo.get("rHood");
             leftHood = hardwareMap.servo.get("lHood");
 
+            telemetry = t;
+
             shooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+            shooter2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
             shooter.setDirection(DcMotorSimple.Direction.REVERSE);
             leftHood.setDirection(Servo.Direction.REVERSE);
+
+            voltageSensor = hardwareMap.voltageSensor.iterator().next();
 
             turret = hardwareMap.dcMotor.get("turret");
             turret.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
@@ -72,10 +88,21 @@ public class Shooter {
             rightHood.setPosition(pos);
         }
 
+    private double maxRPM = 48.67;
+
         public void runShooter() {
-            double vel = shooter.getVelocity(AngleUnit.RADIANS) * 60;
-            velController.setPID(kP, kI, kD);
-            shooter.setPower(velController.calculate(vel, targetRPM) + (kF * targetRPM));
+            double v = -shooter.getVelocity(AngleUnit.RADIANS);
+
+            double fRMP = ((v*60)/(2*Math.PI));
+            double rpm = 6521.7*(fRMP/maxRPM);
+
+            double power = velController.calculate(rpm, targetRPM) + (kF*targetRPM);
+
+            double scalar = 13.0/voltageSensor.getVoltage();
+
+            shooter.setPower(power*scalar);
+            shooter2.setPower(power*scalar);
+
         }
 
         public void update() {
@@ -89,6 +116,11 @@ public class Shooter {
 
         private double analogVoltageToDegrees(double voltage) {
             return voltage * (360/3.3);
+        }
+
+        public void stopShooter() {
+            shooter.setPower(0);
+            shooter2.setPower(0);
         }
 
         public void setTurretTarget(double t) {

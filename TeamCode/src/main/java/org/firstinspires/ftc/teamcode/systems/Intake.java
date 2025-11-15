@@ -18,7 +18,7 @@ public class Intake {
     private boolean intakeActivityFlag = false;
     private boolean shootingFlag = false;
 
-    public static double flapUp = 0.17, flapDown = 0.2;
+    public static double flapUp = 0.81, flapDown = 0.89;
 
     public Intake(HardwareMap hardwareMap) {
         intake = hardwareMap.dcMotor.get("intake");
@@ -31,7 +31,7 @@ public class Intake {
         intakeActivityFlag = flag;
     }
 
-    public void setShootingMode(boolean flag) {
+    public void setReverse(boolean flag) {
         shootingFlag = flag;
     }
 
@@ -41,33 +41,12 @@ public class Intake {
     int shotCount = 0;
 
     public void update() {
-        if (!shootingFlag && intakeActivityFlag) {
-            wasShooting = false;
+        if (intakeActivityFlag) {
             intake.setPower(1);
-            setFlap(flapDown);
         } else if (!shootingFlag && !intakeActivityFlag) {
-            wasShooting = false;
-            setFlap(flapDown);
             intake.setPower(0);
         } else if (shootingFlag && !intakeActivityFlag){
-            if (!wasShooting) {
-                wasShooting = true;
-                shotTimer.reset();
-                setFlap(flapUp);
-                shotCount = 0;
-                shotDelay = 1;
-            }
-
-            double poll = shotTimer.seconds();
-
-            if (poll < shotTransferAllowance) {
-                intake.setPower(1);
-            } else if (poll > shotTransferAllowance && poll < shotDelay) {
-                intake.setPower(0);
-            } else {
-                shotTimer.reset();
-                shotCount += 1;
-            }
+            intake.setPower(-1);
         }
     }
 

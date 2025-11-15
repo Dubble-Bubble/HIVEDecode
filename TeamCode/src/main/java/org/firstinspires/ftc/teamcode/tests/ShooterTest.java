@@ -19,7 +19,7 @@ import org.firstinspires.ftc.teamcode.systems.Shooter;
 @TeleOp
 public class ShooterTest extends OpMode {
 
-    private DcMotorEx shooter;
+    private DcMotorEx shooter, shooter2;
 
     Servo leftHood, rightHood;
 
@@ -42,6 +42,9 @@ public class ShooterTest extends OpMode {
         shooter.setDirection(DcMotorSimple.Direction.REVERSE);
         shooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
 
+        shooter2 = (DcMotorEx) hardwareMap.dcMotor.get("shooter2");
+        shooter2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
+
         shooterPID = new PIDController(p, i, d);
 
         leftHood = hardwareMap.servo.get("lHood");
@@ -59,17 +62,19 @@ public class ShooterTest extends OpMode {
 
         shooterPID.setPID(p, i, d);
 
-        double v = shooter.getVelocity(AngleUnit.RADIANS);
+        double v = -shooter.getVelocity(AngleUnit.RADIANS);
 
         double fRMP = ((v*60)/(2*Math.PI));
-        double rpm = 6521*(fRMP/maxRPM);
+        double rpm = 6521.7*(fRMP/maxRPM);
         setServos(getServoPosition(hoodAnlge));
 
         if (runShooter) {
-            shooter.setPower(shooterPID.calculate(rpm, targetRPM) + (f*targetRPM));
+            double power = shooterPID.calculate(rpm, targetRPM) + (f*targetRPM);
+            shooter.setPower(power);
+            shooter2.setPower(power);
         }
 
-        intake.setPower(gamepad1.right_trigger);
+        intake.setPower(gamepad1.right_stick_y);
 
         telemetry.addData("Velocity, Degrees/S", shooter.getVelocity(AngleUnit.DEGREES));
         telemetry.addData("RPM", rpm);

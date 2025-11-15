@@ -25,7 +25,9 @@ public class TurretPositionTracking extends OpMode {
 
     private PIDController turretPID;
 
-    public static double p, i, d;
+    public static double targetDeg = -90;
+
+    public static double p = 0.025, i, d;
 
     Limelight3A ll3a;
 
@@ -34,36 +36,46 @@ public class TurretPositionTracking extends OpMode {
         turret = hardwareMap.dcMotor.get("turret");
         turret.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
 
-        ll3a = hardwareMap.get(Limelight3A.class, "ll3a");
-        ll3a.start();
-
+//        ll3a = hardwareMap.get(Limelight3A.class, "ll3a");
+//        ll3a.setPollRateHz(250);
+//        ll3a.start();
+//
         turretPID = new PIDController(p, i, d);
 
-//        encoder = hardwareMap.analogInput.get("encoder");
+        encoder = hardwareMap.analogInput.get("encoder");
+//
 
-        turretPID.setSetPoint(0);
     }
 
-    double limelightMountAngleDegrees = 5.0, limelightLensHeightInches = 13.4, goalHeightInches = 60.0;
+    double limelightMountAngleDegrees = 5.0, limelightLensHeightInches = 13.4, goalHeightInches = 29.5;
 
     @Override
     public void loop() {
 
         turretPID.setPID(p, i, d);
 
-        LLResult result = ll3a.getLatestResult();
+//        LLResult result = ll3a.getLatestResult();
+//
+//        double tX = -result.getTx();
+//
+//        double angleToGoalRadians = Math.toRadians(limelightMountAngleDegrees + result.getTy());
+//
+//        //calculate distance
+//        double distanceFromLimelightToGoalInches = (goalHeightInches - limelightLensHeightInches) / Math.tan(angleToGoalRadians);
 
-        double tX = -result.getTx();
 
-        double angleToGoalRadians = Math.toRadians(limelightMountAngleDegrees + result.getTy());
+        double turretDeg = analogVoltageToDegrees(encoder.getVoltage());
 
-        //calculate distance
-        double distanceFromLimelightToGoalInches = (goalHeightInches - limelightLensHeightInches) / Math.tan(angleToGoalRadians);
+        double error = AngleUnit.normalizeDegrees(targetDeg-turretDeg);
 
-        turret.setPower(turretPID.calculate(tX));
+        turret.setPower(p * error);
 
-        telemetry.addData("Angle Error", -tX);
-        telemetry.addData("Distance to tag", distanceFromLimelightToGoalInches);
+        telemetry.addData("Angle Error", error);
+        telemetry.addData("Read Angle", turretDeg);
         telemetry.update();
+    }
+
+    private double analogVoltageToDegrees(double voltage) {
+        return voltage * (360/3.3);
     }
 }

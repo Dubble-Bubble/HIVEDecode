@@ -12,7 +12,7 @@ public class ShotTester extends OpMode {
 
     @Override
     public void init() {
-        shooter = new Shooter(hardwareMap);
+        shooter = new Shooter(hardwareMap, telemetry);
         intake = new Intake(hardwareMap);
     }
 
@@ -20,7 +20,6 @@ public class ShotTester extends OpMode {
     public void loop() {
         shooter.directSet(1);
         intake.setActive(gamepad1.right_trigger > 0.5);
-        intake.setShootingMode(gamepad1.left_trigger > 0.5);
 
         shooter.runShooter();
         intake.update();

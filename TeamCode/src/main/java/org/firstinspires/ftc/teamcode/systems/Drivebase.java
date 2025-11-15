@@ -49,4 +49,14 @@ public class Drivebase {
         }
     }
 
+    public void updateFC(double headingRad) {
+        double rotX = xIn * Math.cos(headingRad) - yIn * Math.sin(headingRad);
+        double rotY = xIn * Math.sin(headingRad) + yIn * Math.cos(headingRad);
+        normalizer = Math.max(Math.abs(rotX) + Math.abs(rotY) + Math.abs(zIn), 1);
+        fL.setPower((rotX + rotY + zIn)/normalizer);
+        bL.setPower((rotX - rotY + zIn)/normalizer);
+        fR.setPower((rotX - rotY - zIn)/normalizer);
+        bR.setPower((rotX + rotY - zIn)/normalizer);
+    }
+
 }

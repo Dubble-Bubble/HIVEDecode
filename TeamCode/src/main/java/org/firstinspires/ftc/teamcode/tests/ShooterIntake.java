@@ -22,7 +22,7 @@ public class ShooterIntake extends OpMode {
 
     @Override
     public void init() {
-        shooter = new Shooter(hardwareMap);
+        shooter = new Shooter(hardwareMap, telemetry);
         intake = hardwareMap.dcMotor.get("intake");
     }
 
