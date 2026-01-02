@@ -76,7 +76,7 @@ public class RedAuto extends OpMode {
         scheduler.schedule(
                 new SequentialCommandGroup(
                         new FraudInstantCommand(()->{
-                            shooter.setTargetRPM(3750);
+                            shooter.setTargetRPM(2700);
                             targetDeg = -87;
                         }),
                         new WaitCommand(300),
@@ -257,7 +257,7 @@ public class RedAuto extends OpMode {
                     .addPath(
                             new BezierLine(new Pose(88.172, 80), new Pose(131, 61))
                     )
-                    .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(50))
+                    .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(55))
                     .build();
 
             Path6 = follower
@@ -265,7 +265,7 @@ public class RedAuto extends OpMode {
                     .addPath(
                             new BezierLine(new Pose(131, 61), new Pose(88.172, 80))
                     )
-                    .setLinearHeadingInterpolation(Math.toRadians(50), Math.toRadians(0))
+                    .setLinearHeadingInterpolation(Math.toRadians(55), Math.toRadians(0))
                     .build();
 
             Path7 = follower

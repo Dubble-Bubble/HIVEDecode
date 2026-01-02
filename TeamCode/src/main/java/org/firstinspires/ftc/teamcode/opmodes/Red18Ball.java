@@ -1,26 +1,18 @@
 package org.firstinspires.ftc.teamcode.opmodes;
 
-import static org.firstinspires.ftc.teamcode.tests.ShotAlgTest.c;
-
 import android.util.Pair;
 
 import com.arcrobotics.ftclib.command.CommandScheduler;
 import com.arcrobotics.ftclib.command.ParallelCommandGroup;
 import com.arcrobotics.ftclib.command.SequentialCommandGroup;
 import com.arcrobotics.ftclib.command.WaitCommand;
-import com.arcrobotics.ftclib.controller.PIDController;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierCurve;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.PathChain;
-import com.qualcomm.hardware.limelightvision.LLResult;
-import com.qualcomm.hardware.limelightvision.LLResultTypes;
-import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.hardware.AnalogInput;
-import com.qualcomm.robotcore.hardware.DcMotor;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
@@ -35,7 +27,7 @@ import org.firstinspires.ftc.teamcode.systems.Shooter;
 import org.firstinspires.ftc.teamcode.systems.Turret;
 
 @Autonomous
-public class RedAutoLimelight extends OpMode {
+public class Red18Ball extends OpMode {
 
     Follower follower;
 
@@ -80,11 +72,12 @@ public class RedAutoLimelight extends OpMode {
                         new FraudInstantCommand(()->{
                             intake.setTransfer(true);
                         }),
-                        new WaitCommand(700),
+                        new WaitCommand(500),
                         new ParallelCommandGroup(
                                 new IntakeCommand(intake, Intake.flapDown, 1),
                                 new FraudInstantCommand(()->{
                                     intake.setTransfer(false);
+                                    turret.setOffset(-4);
                                 })
                         ),
                         new ParallelCommandGroup(
@@ -99,11 +92,12 @@ public class RedAutoLimelight extends OpMode {
                         new FraudInstantCommand(()->{
                             intake.setTransfer(true);
                         }),
-                        new WaitCommand(700),
+                        new WaitCommand(600),
                         new ParallelCommandGroup(
                                 new IntakeCommand(intake, Intake.flapDown, 1),
                                 new FraudInstantCommand(()->{
                                     intake.setTransfer(false);
+                                    turret.setOffset(0);
                                 })
                         ),
                         new ParallelCommandGroup(
@@ -118,7 +112,7 @@ public class RedAutoLimelight extends OpMode {
                             intake.setFlap(Intake.flapUp);
                             intake.setTransfer(true);
                         }),
-                        new WaitCommand(700),
+                        new WaitCommand(600),
                         new ParallelCommandGroup(
                                 new IntakeCommand(intake, Intake.flapDown, 1),
                                 new FraudInstantCommand(()->{
@@ -133,7 +127,7 @@ public class RedAutoLimelight extends OpMode {
                                 ),
                                 new IntakeCommand(intake, Intake.flapDown, 1)
                         ),
-                        new WaitCommand(1300),
+                        new WaitCommand(1000),
 //                        new FraudInstantCommand(()->{
 //                            shooter.setTargetRPM(4300);
 //                        }),
@@ -145,7 +139,34 @@ public class RedAutoLimelight extends OpMode {
                             intake.setFlap(Intake.flapUp);
                             intake.setTransfer(true);
                         }),
-                        new WaitCommand(700),
+                        new WaitCommand(600),
+                        new ParallelCommandGroup(
+                                new IntakeCommand(intake, Intake.flapDown, 1),
+                                new FraudInstantCommand(()->{
+                                    intake.setTransfer(false);
+                                })
+                        ),
+                        new ParallelCommandGroup(
+                                new SequentialCommandGroup(
+                                        new PedroFollowCommand(follower, Path5),
+                                        new WaitCommand(100),
+                                        new PedroFollowCommand(follower, paths.PathHalf)
+                                ),
+                                new IntakeCommand(intake, Intake.flapDown, 1)
+                        ),
+                        new WaitCommand(1000),
+//                        new FraudInstantCommand(()->{
+//                            shooter.setTargetRPM(4300);
+//                        }),
+                        new IntakeCommand(intake, Intake.flapDown, 0),
+                        new PedroFollowCommand(follower, Path6),
+                        new IntakeCommand(intake, Intake.flapDown, 1),
+                        new WaitCommand(250),
+                        new FraudInstantCommand(()->{
+                            intake.setFlap(Intake.flapUp);
+                            intake.setTransfer(true);
+                        }),
+                        new WaitCommand(600),
                         new ParallelCommandGroup(
                                 new IntakeCommand(intake, Intake.flapDown, 1),
                                 new FraudInstantCommand(()->{
@@ -165,7 +186,7 @@ public class RedAutoLimelight extends OpMode {
                             intake.setFlap(Intake.flapUp);
                             intake.setTransfer(true);
                         }),
-                        new WaitCommand(700),
+                        new WaitCommand(600),
                         new ParallelCommandGroup(
                                 new IntakeCommand(intake, Intake.flapDown, 1),
                                 new FraudInstantCommand(()->{
@@ -203,13 +224,13 @@ public class RedAutoLimelight extends OpMode {
         shooter.runShooter();
         turret.update();
 
-        endpose = new Pose2D(DistanceUnit.INCH, pose.getX(), pose.getY(), AngleUnit.RADIANS, pose.getHeading());
+        RedAutoLimelight.endpose = new Pose2D(DistanceUnit.INCH, pose.getX(), pose.getY(), AngleUnit.RADIANS, pose.getHeading());
     }
 
     @Override
     public void stop() {
         Pose pose = follower.getPose();
-        endpose = new Pose2D(DistanceUnit.INCH, pose.getX(), pose.getY(), AngleUnit.RADIANS, pose.getHeading());
+        RedAutoLimelight.endpose = new Pose2D(DistanceUnit.INCH, pose.getX(), pose.getY(), AngleUnit.RADIANS, pose.getHeading());
     }
 
 
@@ -265,7 +286,7 @@ public class RedAutoLimelight extends OpMode {
             Path4 = follower
                     .pathBuilder()
                     .addPath(
-                            new BezierLine(new Pose(124, 56.484), new Pose(88.172, 78.609))
+                            new BezierLine(new Pose(124, 56.484), new Pose(88.172, 80))
                     )
                     .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
                     .build();
@@ -284,17 +305,17 @@ public class RedAutoLimelight extends OpMode {
             PathHalf = follower
                     .pathBuilder()
                     .addPath(
-                            new BezierLine(new Pose(125, 65), new Pose(133, 53))
+                            new BezierLine(new Pose(125, 65), new Pose(133, 49))
                     )
-                    .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(50))
+                    .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(40))
                     .build();
 
             Path6 = follower
                     .pathBuilder()
                     .addPath(
-                            new BezierLine(new Pose(133, 53), new Pose(88.172, 80))
+                            new BezierLine(new Pose(133, 49), new Pose(88.172, 80))
                     )
-                    .setLinearHeadingInterpolation(Math.toRadians(50), Math.toRadians(0))
+                    .setLinearHeadingInterpolation(Math.toRadians(40), Math.toRadians(0))
                     .build();
 
             Path7 = follower

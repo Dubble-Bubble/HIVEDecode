@@ -9,22 +9,22 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 @Config
 public class Intake {
 
-    private DcMotor intake;
-    private Servo flapL, flapR, pto;
+    private DcMotor intake, transfer;
+    private Servo flapL, flapR, pto, pto2;
 
     public static double shotDelay = 1.2, shotTransferAllowance = 0.4;
     public static double flapActuationTime = 0.8;
 
     private boolean intakeActivityFlag = false;
-    private boolean shootingFlag = false;
+    private boolean reverseFlag = false;
 
-    public static double flapUp = 0.81, flapDown = 0.89, ptoEngaged = 0.36, ptoDisengaged = 0.265;
+    public static double flapUp = 0.77, flapDown = 0.9, ptoEngaged = 0.15, ptoDisengaged = 0;
 
     public Intake(HardwareMap hardwareMap) {
         intake = hardwareMap.dcMotor.get("intake");
+        transfer = hardwareMap.dcMotor.get("transfer");
         flapL = hardwareMap.servo.get("lFlap");
         flapR = hardwareMap.servo.get("rFlap");
-        pto = hardwareMap.servo.get("pto");
         flapR.setDirection(Servo.Direction.REVERSE);
     }
 
@@ -33,7 +33,15 @@ public class Intake {
     }
 
     public void setReverse(boolean flag) {
-        shootingFlag = flag;
+        reverseFlag = flag;
+    }
+
+    public void setTransfer(boolean transfer) {
+        if (transfer) {
+            this.transfer.setPower(-1);
+        } else {
+            this.transfer.setPower(0);
+        }
     }
 
     ElapsedTime shotTimer = new ElapsedTime();
@@ -44,10 +52,11 @@ public class Intake {
     public void update() {
         if (intakeActivityFlag) {
             intake.setPower(1);
-        } else if (!shootingFlag && !intakeActivityFlag) {
+        } else if (!reverseFlag && !intakeActivityFlag) {
             intake.setPower(0);
-        } else if (shootingFlag && !intakeActivityFlag){
+        } else if (reverseFlag && !intakeActivityFlag){
             intake.setPower(-1);
+            transfer.setPower(1);
         }
     }
 
@@ -62,9 +71,11 @@ public class Intake {
 
     public void setPtoEngaged(boolean engaged) {
         if (engaged) {
-            pto.setPosition(ptoEngaged);
+            pto.setPosition(0.08);
+            pto2.setPosition(0.96);
         } else {
-            pto.setPosition(ptoDisengaged);
+            pto.setPosition(0.2);
+            pto2.setPosition(0.85);
         }
     }
 

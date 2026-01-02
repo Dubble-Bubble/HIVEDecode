@@ -17,7 +17,7 @@ public class HoodTuner extends OpMode {
     public void init() {
         leftHood = hardwareMap.servo.get("lHood");
         rightHood = hardwareMap.servo.get("rHood");
-        rightHood.setDirection(Servo.Direction.REVERSE);
+        leftHood.setDirection(Servo.Direction.REVERSE);
     }
 
     @Override

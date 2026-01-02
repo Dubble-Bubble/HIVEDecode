@@ -14,8 +14,11 @@ import org.firstinspires.ftc.teamcode.systems.Intake;
 public class ptotest extends OpMode {
     public static double ip = 0;
     private Servo pto;
+    private Servo pto2;
 
     private DcMotor intake;
+
+    public static double ptoPos = 0, pto2Pos = 0;
 
     public static boolean ptoEngaged = false;
 
@@ -23,6 +26,8 @@ public class ptotest extends OpMode {
     @Override
     public void init() {
         pto = hardwareMap.servo.get("pto");
+        pto.setDirection(Servo.Direction.REVERSE);
+        pto2 = hardwareMap.servo.get("pto2");
 
         intake = hardwareMap.dcMotor.get("intake");
     }
@@ -30,11 +35,8 @@ public class ptotest extends OpMode {
     @Override
     public void loop() {
 
-        if (ptoEngaged) {
-            pto.setPosition(Intake.ptoEngaged);
-        } else {
-            pto.setPosition(Intake.ptoDisengaged);
-        }
+        pto.setPosition(ptoPos);
+        pto2.setPosition(pto2Pos);
 
         intake.setPower(ip);
     }

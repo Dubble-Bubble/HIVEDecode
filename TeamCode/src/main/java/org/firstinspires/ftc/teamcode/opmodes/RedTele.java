@@ -1,11 +1,15 @@
 package org.firstinspires.ftc.teamcode.opmodes;
 
 import static org.firstinspires.ftc.teamcode.tests.ShotAlgTest.c;
+import static org.firstinspires.ftc.teamcode.tests.ShotAlgTest.f;
+
+import android.util.Pair;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.arcrobotics.ftclib.controller.PIDController;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
+import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
@@ -21,26 +25,23 @@ import org.firstinspires.ftc.teamcode.systems.Drivebase;
 import org.firstinspires.ftc.teamcode.systems.Intake;
 import org.firstinspires.ftc.teamcode.systems.Localizer;
 import org.firstinspires.ftc.teamcode.systems.Shooter;
+import org.firstinspires.ftc.teamcode.systems.Turret;
 
 @com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "RedTeleop")
 @Config
 public class RedTele extends OpMode {
 
-    private Drivebase drivebase; private Intake intake; private Shooter shooter;
+    private Drivebase drivebase; private Intake intake; private Shooter shooter; private Turret turret;
 
     GamepadEx controller;
 
-    Localizer localizer;
+    private boolean isDpadDownPressed = false, isBPressed = false, isAPressed = false, isDpadUpPressed = false, shootingMode = false, close = true, flapUp = false;
 
-    private boolean isDpadDownPressed = false, isDpadRightPressed = false, isLBPressed = false, isDpadUpPressed = false, shootingMode = false, close = true, flapUp = false;
+    private GoBildaPinpointDriver pinpoint;
+    public static GoBildaPinpointDriver.EncoderDirection yDirection, xDirection;
 
-    Limelight3A ll3a;
-    private AnalogInput encoder;
-    public static double p = 0.025, i, d;
-    private PIDController turretPID;
-    private DcMotor turret;
+    public double xPos, yPos, meters;
 
-    double limelightMountAngleDegrees = 10, limelightLensHeightInches = 13.4, goalHeightInches = 29.5, lastTurretTarget = 0;
 
     @Override
     public void init() {
@@ -49,125 +50,98 @@ public class RedTele extends OpMode {
 
         controller = new GamepadEx(gamepad1);
 
-        turret = hardwareMap.dcMotor.get("turret");
-        turret.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
+        pinpoint.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
 
-        localizer = new Localizer(hardwareMap, false);
-        localizer.setPose(new Pose2D(DistanceUnit.INCH, 0, 0, AngleUnit.DEGREES, 0));
+        pinpoint.setEncoderDirections(xDirection, yDirection);
 
-        ll3a = hardwareMap.get(Limelight3A.class, "ll3a");
-        ll3a.setPollRateHz(250);
-        ll3a.start();
+        pinpoint.setOffsets(-92.15, -111.625, DistanceUnit.MM);
 
-        turretPID = new PIDController(p, i, d);
-        encoder = hardwareMap.analogInput.get("encoder");
+        pinpoint.setPosition(RedAutoLimelight.endpose);
+
+        turret = new Turret(hardwareMap, true);
 
         shooter = new Shooter(hardwareMap, telemetry);
-
-        intake.setPtoEngaged(false);
     }
 
-    ElapsedTime surveyTimer = new ElapsedTime();
+    double looptime = 0; boolean turretUpdateFlag = true;
+    ElapsedTime looptimer = new ElapsedTime();
 
     @Override
     public void loop() {
-        localizer.update();
-        double heading = localizer.getTruePose().getHeading(AngleUnit.RADIANS);
+
+        looptimer.reset();
+
+        telemetry.addData("loop time (ms)", looptime);
+        telemetry.addData("loop time (hz)", (1000/looptime));
+
+        pinpoint.update();
+
+        if (gamepad1.a && !isAPressed) {
+            pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, 8.795, 8, AngleUnit.RADIANS, Math.toRadians(180)));
+        } isAPressed = gamepad1.a;
+
+        if (gamepad1.b && !isBPressed) {
+            pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, 144-8.795, 8, AngleUnit.RADIANS, 0));
+        } isBPressed = gamepad1.b;
+
+        double heading = pinpoint.getHeading(AngleUnit.RADIANS); xPos = pinpoint.getPosX(DistanceUnit.INCH); yPos = pinpoint.getPosY(DistanceUnit.INCH);
         drivebase.takeTeleInput(controller.getLeftY(), controller.getLeftX(), controller.getRightX());
+
+        turret.setPose(new Pair<>(xPos, yPos), Math.toDegrees(heading));
 
         if (gamepad1.right_bumper && !isDpadDownPressed) {
             shootingMode = !shootingMode;
-            surveyTimer.reset();
-        } isDpadDownPressed = gamepad1.right_bumper;
-
-        if (gamepad1.dpad_right && !isDpadRightPressed) {
-            close = !close;
-        } isDpadRightPressed = gamepad1.dpad_right;
+            close = true;
+        } else if(gamepad1.dpad_down && !isDpadDownPressed) {
+            shootingMode = !shootingMode;
+            close = false;
+        } isDpadDownPressed = gamepad1.right_bumper || gamepad1.dpad_down;
 
         if (gamepad1.left_bumper) {
             intake.setFlap(Intake.flapUp);
-            intake.setPtoEngaged(true);
+            intake.setTransfer(true);
             intake.setActive(true);
         } else {
             intake.setFlap(Intake.flapDown);
-            intake.setPtoEngaged(false);
+            intake.setTransfer(false);
             intake.setActive(controller.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) > 0.5);
             intake.setReverse(controller.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) > 0.5);
         }
 
         if (shootingMode) {
-            LLResult result = ll3a.getLatestResult();
-            boolean detected = result.getBotposeTagCount() > 0;
-            boolean locked = false;
-            double tX = 0, tY = 0;
-
-            if (detected) {
-                for (LLResultTypes.FiducialResult result1 : result.getFiducialResults()) {
-                    if (result1.getFiducialId() == 24) {
-                        locked = true;
-                        tX = -result1.getTargetXDegrees();
-                        tY = result1.getTargetYDegrees();
-                        break;
-                    } else {
-                        locked = false;
-                    }
-                }
-            }
-
-            telemetry.addData("locked?", locked);
-
-            if (locked) {
-                double angleToGoalRadians = Math.toRadians(limelightMountAngleDegrees + tY);
-                double distanceFromLimelightToGoalInches = (goalHeightInches - limelightLensHeightInches) / Math.tan(angleToGoalRadians);
-                turret.setPower(p*(0-tX));
-
-                double meters = distanceFromLimelightToGoalInches * 0.0254;
-                double turretDeg = analogVoltageToDegrees(encoder.getVoltage());
-
-                shooter.setTargetRPM(getRPMForShot(meters) + c);
-                shooter.setHoodAngle(getHoodAngle(meters));
-                lastTurretTarget = turretDeg;
+            turret.setMode(Turret.Mode.odo);
+            meters = turret.distanceToGoal(xPos, yPos) * 0.0254;
+            if (close) {
+                shooter.setTargetRPM(shooter.getRPMForShot(meters) + c);
+                shooter.setHoodAngle(shooter.getHoodAngle(meters));
+                telemetry.addData("target rpm", shooter.getRPMForShot(meters) + c);
             } else {
-                double turretDeg = analogVoltageToDegrees(encoder.getVoltage());
-                double error;
-                if (close) {
-
-                    error = AngleUnit.normalizeDegrees(45 - turretDeg);
-
-                } else {
-
-                    error = AngleUnit.normalizeDegrees((Math.toDegrees(heading) - 70) - turretDeg);
-
-                }
-                turret.setPower(p * error);
-                lastTurretTarget = turretDeg;
+                shooter.setTargetRPM(shooter.getRPMForShot(meters) + f);
+                shooter.setHoodAngle(Math.min(shooter.getHoodAngle(meters), 47));
+                telemetry.addData("target rpm", shooter.getRPMForShot(meters) + f);
             }
+
+            telemetry.addData("meters", meters);
+
             shooter.runShooter();
         } else {
-            double turretDeg = analogVoltageToDegrees(encoder.getVoltage());
-            double error = AngleUnit.normalizeDegrees(lastTurretTarget - turretDeg);
-            turret.setPower(p * error);
+            turret.setMode(Turret.Mode.fixed);
+            turret.setTargetDegrees(0);
             shooter.stopShooter();
         }
 
         telemetry.addData("is shootingModeOn", shootingMode);
         telemetry.addData("is close", close);
+        telemetry.addData("pose x", xPos);
+        telemetry.addData("pose y", yPos);
+        telemetry.addData("heading", Math.toDegrees(heading));
 
         intake.update();
         drivebase.update();
-    }
+        turret.update();
+        telemetry.update();
 
-    private double analogVoltageToDegrees(double voltage) {
-        return voltage * (360/3.3);
-    }
-
-    public double getRPMForShot(double meters) {
-//        return (211.43 * meters) + 1177;
-        return (227.87*meters) + 1382.7;
-    }
-
-    public double getHoodAngle(double meters) {
-//        return (-8.8 * meters) + 76.16;
-        return (-4.8701*meters) + 59.754;
+        looptime = looptimer.milliseconds();
     }
 }

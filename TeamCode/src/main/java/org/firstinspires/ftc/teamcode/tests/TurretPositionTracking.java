@@ -1,12 +1,15 @@
 package org.firstinspires.ftc.teamcode.tests;
 
+import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.arcrobotics.ftclib.controller.PIDController;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.AnalogInput;
+import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -20,29 +23,29 @@ import org.firstinspires.ftc.teamcode.systems.Localizer;
 @Config
 public class TurretPositionTracking extends OpMode {
 
-    private DcMotor turret;
+    private CRServo s1, s2;
     private AnalogInput encoder;
 
     private PIDController turretPID;
 
-    public static double targetDeg = -90;
+    public static double targetDeg = 0;
 
-    public static double p = 0.025, i, d;
+    public static double p = 0.03, i, d, f, b;
+
+    public static boolean runTurret = false;
 
     Limelight3A ll3a;
 
     @Override
     public void init() {
-        turret = hardwareMap.dcMotor.get("turret");
-        turret.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
+        s1 = hardwareMap.crservo.get("cts");
+        s2 = hardwareMap.crservo.get("mts");
 
-//        ll3a = hardwareMap.get(Limelight3A.class, "ll3a");
-//        ll3a.setPollRateHz(250);
-//        ll3a.start();
-//
         turretPID = new PIDController(p, i, d);
 
         encoder = hardwareMap.analogInput.get("encoder");
+
+        telemetry = new MultipleTelemetry(FtcDashboard.getInstance().getTelemetry(), telemetry);
 //
 
     }
@@ -53,29 +56,32 @@ public class TurretPositionTracking extends OpMode {
     public void loop() {
 
         turretPID.setPID(p, i, d);
-
+//
 //        LLResult result = ll3a.getLatestResult();
 //
 //        double tX = -result.getTx();
 //
 //        double angleToGoalRadians = Math.toRadians(limelightMountAngleDegrees + result.getTy());
 //
-//        //calculate distance
 //        double distanceFromLimelightToGoalInches = (goalHeightInches - limelightLensHeightInches) / Math.tan(angleToGoalRadians);
-
 
         double turretDeg = analogVoltageToDegrees(encoder.getVoltage());
 
-        double error = AngleUnit.normalizeDegrees(targetDeg-turretDeg);
 
-        turret.setPower(p * error);
 
-        telemetry.addData("Angle Error", error);
-        telemetry.addData("Read Angle", turretDeg);
         telemetry.update();
     }
 
     private double analogVoltageToDegrees(double voltage) {
         return voltage * (360/3.3);
+    }
+
+    private void setPower(double power) {
+        s1.setPower(power);
+        s2.setPower(power);
+    }
+
+    public double getFitP(double error) {
+        return  Math.max(0.556 + (-0.086*Math.log(error)), 0.03);
     }
 }

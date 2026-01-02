@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.opmodes;
+package org.firstinspires.ftc.teamcode.tests;
 
 import static org.firstinspires.ftc.teamcode.tests.ShotAlgTest.c;
 
@@ -8,11 +8,11 @@ import com.arcrobotics.ftclib.command.CommandScheduler;
 import com.arcrobotics.ftclib.command.ParallelCommandGroup;
 import com.arcrobotics.ftclib.command.SequentialCommandGroup;
 import com.arcrobotics.ftclib.command.WaitCommand;
-import com.arcrobotics.ftclib.controller.PIDController;
 import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierCurve;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
+import com.pedropathing.paths.Path;
 import com.pedropathing.paths.PathChain;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
@@ -25,48 +25,45 @@ import com.qualcomm.robotcore.hardware.DcMotor;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
+import org.firstinspires.ftc.teamcode.opmodes.PurpleAutoLimelight;
 import org.firstinspires.ftc.teamcode.opmodes.commands.FraudInstantCommand;
 import org.firstinspires.ftc.teamcode.opmodes.commands.IntakeCommand;
 import org.firstinspires.ftc.teamcode.opmodes.commands.PedroFollowCommand;
-import org.firstinspires.ftc.teamcode.opmodes.commands.StopShooter;
 import org.firstinspires.ftc.teamcode.pedropathing.Constants;
 import org.firstinspires.ftc.teamcode.systems.Intake;
 import org.firstinspires.ftc.teamcode.systems.Shooter;
 import org.firstinspires.ftc.teamcode.systems.Turret;
 
 @Autonomous
-public class RedAutoLimelight extends OpMode {
+public class AmeyAutoBlue extends OpMode {
 
-    Follower follower;
+    Follower follower; Intake intake; Shooter shooter;
 
-    public static Pose2D endpose = new Pose2D(DistanceUnit.INCH, 0,0, AngleUnit.RADIANS,0);
-    Turret turret;
-
-    Intake intake;
-
-    Shooter shooter;
-
-    public PathChain Path1, Path2, Path3, Path4, Path5, Path6, Path7, Path8, Path9, Path0;
+    public PathChain Path1, Path2, Path3, Path4, Path5, Path6, Path7, Path8, Path9, Path10, PathGurt, Path11, Path12;
 
     Paths paths;
 
     CommandScheduler scheduler;
 
+    Turret turret;
+
     @Override
     public void init() {
+        turret = new Turret(hardwareMap, false);
 
         follower = Constants.createFollower(hardwareMap);
         intake = new Intake(hardwareMap);
         shooter = new Shooter(hardwareMap, telemetry);
 
-        follower.setPose(new Pose(112, 135.600, Math.toRadians(-90)));
-
         paths = new Paths(follower);
-        Path1 = paths.Path1; Path2 = paths.Path2; Path3 = paths.Path3; Path4 = paths.Path4;
-        Path5 = paths.Path5; Path6 = paths.Path6; Path7 = paths.Path7; Path8 = paths.Path8;
-        Path9 = paths.Path9; Path0 = paths.Path0;
+        Path1 = paths.Path1; Path2 = paths.Path2; Path3 = paths.Path3; Path4 = paths.Path4; Path5 = paths.Path5; Path6 = paths.Path6;
+        Path7 = paths.Path7; Path8 = paths.Path8; Path9 = paths.Path9; Path10 = paths.Path10; PathGurt = paths.PathGurt; Path11 = paths.Path11;
+        Path12 = paths.Path12;
+
+        follower.setPose(new Pose(144-112, 134.0, Math.toRadians(-90)));
 
         scheduler = CommandScheduler.getInstance(); scheduler.reset(); scheduler = CommandScheduler.getInstance();
+
         shooter.setHoodAngle(50);
 
         scheduler.schedule(
@@ -74,119 +71,105 @@ public class RedAutoLimelight extends OpMode {
                         new FraudInstantCommand(()->{
                             intake.setFlap(Intake.flapUp);
                         }),
-                        new IntakeCommand(intake, Intake.flapUp, 1),
-                        new PedroFollowCommand(follower, Path0),
-                        new WaitCommand(250),
-                        new FraudInstantCommand(()->{
-                            intake.setTransfer(true);
-                        }),
-                        new WaitCommand(700),
                         new ParallelCommandGroup(
-                                new IntakeCommand(intake, Intake.flapDown, 1),
-                                new FraudInstantCommand(()->{
-                                    intake.setTransfer(false);
-                                })
-                        ),
-                        new ParallelCommandGroup(
-                                new PedroFollowCommand(follower, Path1),
-                                new IntakeCommand(intake, Intake.flapDown, 1)
-                        ),
-                        new ParallelCommandGroup(
-                                new PedroFollowCommand(follower, Path2),
-                                new IntakeCommand(intake, Intake.flapUp, 1)
+                                new IntakeCommand(intake, Intake.flapUp, 1),
+                                new PedroFollowCommand(follower, Path1)
                         ),
                         new WaitCommand(400),
                         new FraudInstantCommand(()->{
                             intake.setTransfer(true);
                         }),
-                        new WaitCommand(700),
+                        new WaitCommand(650),
                         new ParallelCommandGroup(
                                 new IntakeCommand(intake, Intake.flapDown, 1),
                                 new FraudInstantCommand(()->{
                                     intake.setTransfer(false);
                                 })
                         ),
-                        new ParallelCommandGroup(
-                                new PedroFollowCommand(follower, Path3),
-                                new IntakeCommand(intake, Intake.flapDown, 1)
-                        ),
-                        new ParallelCommandGroup(
-                                new PedroFollowCommand(follower, Path4)
-                        ),
-                        new WaitCommand(250),
+                        new PedroFollowCommand(follower, Path2),
+                        new WaitCommand(400),
+                        new PedroFollowCommand(follower, PathGurt),
                         new FraudInstantCommand(()->{
                             intake.setFlap(Intake.flapUp);
-                            intake.setTransfer(true);
                         }),
-                        new WaitCommand(700),
-                        new ParallelCommandGroup(
-                                new IntakeCommand(intake, Intake.flapDown, 1),
-                                new FraudInstantCommand(()->{
-                                    intake.setTransfer(false);
-                                })
-                        ),
-                        new ParallelCommandGroup(
-                                new SequentialCommandGroup(
-                                        new PedroFollowCommand(follower, Path5),
-                                        new WaitCommand(100),
-                                        new PedroFollowCommand(follower, paths.PathHalf)
-                                ),
-                                new IntakeCommand(intake, Intake.flapDown, 1)
-                        ),
-                        new WaitCommand(1300),
-//                        new FraudInstantCommand(()->{
-//                            shooter.setTargetRPM(4300);
-//                        }),
-                        new IntakeCommand(intake, Intake.flapDown, 0),
-                        new PedroFollowCommand(follower, Path6),
-                        new IntakeCommand(intake, Intake.flapDown, 1),
-                        new WaitCommand(250),
+                        new PedroFollowCommand(follower, Path3),
+                        new WaitCommand(400),
                         new FraudInstantCommand(()->{
-                            intake.setFlap(Intake.flapUp);
                             intake.setTransfer(true);
                         }),
-                        new WaitCommand(700),
+                        new WaitCommand(760),
                         new ParallelCommandGroup(
                                 new IntakeCommand(intake, Intake.flapDown, 1),
                                 new FraudInstantCommand(()->{
                                     intake.setTransfer(false);
                                 })
                         ),
-                        new ParallelCommandGroup(
-                                new PedroFollowCommand(follower, Path7),
 
-                                new IntakeCommand(intake, Intake.flapDown, 1)
-                        ),
-                        new IntakeCommand(intake, Intake.flapDown, 0),
-                        new PedroFollowCommand(follower, Path8),
-                        new IntakeCommand(intake, Intake.flapDown, 1),
-                        new WaitCommand(250),
+                        new PedroFollowCommand(follower, Path4),
+                        new WaitCommand(400),
+                        new PedroFollowCommand(follower, Path5),
                         new FraudInstantCommand(()->{
                             intake.setFlap(Intake.flapUp);
+                        }),
+                        new PedroFollowCommand(follower, Path6),
+                        new WaitCommand(400),
+                        new FraudInstantCommand(()->{
                             intake.setTransfer(true);
                         }),
-                        new WaitCommand(700),
+                        new WaitCommand(760),
                         new ParallelCommandGroup(
                                 new IntakeCommand(intake, Intake.flapDown, 1),
                                 new FraudInstantCommand(()->{
                                     intake.setTransfer(false);
                                 })
                         ),
+
+                        new PedroFollowCommand(follower, Path7),
+                        new FraudInstantCommand(()->{
+                            intake.setFlap(Intake.flapUp);
+                        }),
+                        new PedroFollowCommand(follower, Path8),
+                        new WaitCommand(400),
+                        new FraudInstantCommand(()->{
+                            intake.setTransfer(true);
+                        }),
+                        new WaitCommand(760),
+                        new ParallelCommandGroup(
+                                new IntakeCommand(intake, Intake.flapDown, 1),
+                                new FraudInstantCommand(()->{
+                                    intake.setTransfer(false);
+                                })
+                        ),
+                        new IntakeCommand(intake, Intake.flapDown, 1),
                         new PedroFollowCommand(follower, Path9),
-                        new StopShooter(shooter),
-                        new IntakeCommand(intake, Intake.flapDown, 0)
+                        new WaitCommand(900),
+                        new ParallelCommandGroup(
+                                new PedroFollowCommand(follower, Path10),
+                                new IntakeCommand(intake, Intake.flapDown, 1)
+                        ),
+                        new ParallelCommandGroup(
+                                new PedroFollowCommand(follower, Path11),
+                                new IntakeCommand(intake, Intake.flapDown, 1)
+                        ),
+                        new WaitCommand(400),
+                        new IntakeCommand(intake, Intake.flapUp, 1),
+                        new FraudInstantCommand(()->{
+                            intake.setTransfer(true);
+                        }),
+                        new WaitCommand(760),
+                        new ParallelCommandGroup(
+                                new IntakeCommand(intake, Intake.flapDown, 1),
+                                new FraudInstantCommand(()->{
+                                    intake.setTransfer(false);
+                                })
+                        )
                 )
         );
-
-        intake.setFlap(Intake.flapUp);
-
-        turret = new Turret(hardwareMap, true);
         turret.setMode(Turret.Mode.odo);
-
     }
 
     private Pose pose;
-    double meters;
+    private double meters;
 
     @Override
     public void loop() {
@@ -203,15 +186,8 @@ public class RedAutoLimelight extends OpMode {
         shooter.runShooter();
         turret.update();
 
-        endpose = new Pose2D(DistanceUnit.INCH, pose.getX(), pose.getY(), AngleUnit.RADIANS, pose.getHeading());
+        PurpleAutoLimelight.endpose = new Pose2D(DistanceUnit.INCH, pose.getX(), pose.getY(), AngleUnit.RADIANS, pose.getHeading());
     }
-
-    @Override
-    public void stop() {
-        Pose pose = follower.getPose();
-        endpose = new Pose2D(DistanceUnit.INCH, pose.getX(), pose.getY(), AngleUnit.RADIANS, pose.getHeading());
-    }
-
 
     public static class Paths {
 
@@ -222,107 +198,127 @@ public class RedAutoLimelight extends OpMode {
         public PathChain Path5;
         public PathChain Path6;
         public PathChain Path7;
-        public PathChain Path8, Path9, PathHalf, Path0;
+        public PathChain Path8;
+        public PathChain Path9;
+        public PathChain Path10, PathGurt, Path11, Path12;
 
         public Paths(Follower follower) {
-
-            Path0 = follower
-                    .pathBuilder()
-                    .addPath(
-                            new BezierLine(new Pose(112, 135.5), new Pose(94, 86))
-                    ) .setLinearHeadingInterpolation(Math.toRadians(-90), Math.toRadians(0))
-                    .build();
-
             Path1 = follower
                     .pathBuilder()
                     .addPath(
-                            new BezierLine(new Pose(94, 86), new Pose(124, 82))
+                            new BezierLine(new Pose(144-112.250, 136.421), new Pose(144-98.321, 88.080))
                     )
-                    .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
+                    .setLinearHeadingInterpolation(Math.toRadians(-90), Math.toRadians(180))
                     .build();
 
             Path2 = follower
                     .pathBuilder()
                     .addPath(
-                            new BezierLine(new Pose(124, 82.969), new Pose(94.078, 84.094))
+                            new BezierCurve(
+                                    new Pose(144-98.321, 88.080),
+                                    new Pose(144-94.634, 80.501),
+                                    new Pose(144-120, 80)
+                            )
                     )
-                    .setConstantHeadingInterpolation(Math.toRadians(0))
-                    .setVelocityConstraint(0)
+                    .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(180))
+                    .build();
+
+            PathGurt = follower.pathBuilder().addPath(
+                    new BezierLine(new Pose(24, 80), new Pose(16, 76)))
+                    .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(90))
                     .build();
 
             Path3 = follower
                     .pathBuilder()
                     .addPath(
-                            new BezierCurve(
-                                    new Pose(94.078, 84.094),
-                                    new Pose(87.750, 53.719),
-                                    new Pose(124, 56.484)
-                            )
+                            new BezierLine(new Pose(24, 73), new Pose(144-89.104, 82.959))
                     )
-                    .setConstantHeadingInterpolation(Math.toRadians(0))
+                    .setLinearHeadingInterpolation(Math.toRadians(90), Math.toRadians(180))
                     .build();
 
             Path4 = follower
                     .pathBuilder()
                     .addPath(
-                            new BezierLine(new Pose(124, 56.484), new Pose(88.172, 78.609))
+                            new BezierCurve(
+                                    new Pose(144-89.104, 82.959),
+                                    new Pose(144-84.188, 55.511),
+                                    new Pose(144-125, 58)
+                            )
                     )
-                    .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
+                    .setConstantHeadingInterpolation(Math.toRadians(180))
                     .build();
-
 
             Path5 = follower
                     .pathBuilder()
                     .addPath(
-                            new BezierLine(new Pose(88.172, 80), new Pose(125, 65))
+                            new BezierLine(new Pose(144-125, 58), new Pose(144-127, 75))
                     )
-                    .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
-                    .setVelocityConstraint(10)
-                    .setTranslationalConstraint(2)
-                    .build();
-
-            PathHalf = follower
-                    .pathBuilder()
-                    .addPath(
-                            new BezierLine(new Pose(125, 65), new Pose(133, 53))
-                    )
-                    .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(50))
+                    .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(-90))
                     .build();
 
             Path6 = follower
                     .pathBuilder()
                     .addPath(
-                            new BezierLine(new Pose(133, 53), new Pose(88.172, 80))
+                            new BezierLine(new Pose(144-128, 75), new Pose(144-88.899, 83.368))
                     )
-                    .setLinearHeadingInterpolation(Math.toRadians(50), Math.toRadians(0))
+                    .setLinearHeadingInterpolation(Math.toRadians(-90), Math.toRadians(180))
                     .build();
 
             Path7 = follower
                     .pathBuilder()
                     .addPath(
                             new BezierCurve(
-                                    new Pose(88.172, 78.609),
-                                    new Pose(70, 35.516),
-                                    new Pose(133, 33)
+                                    new Pose(144-88.899, 83.368),
+                                    new Pose(144-81.320, 29.701),
+                                    new Pose(144-124.541, 35.232)
                             )
                     )
-                    .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
+                    .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(180))
                     .build();
 
             Path8 = follower
                     .pathBuilder()
                     .addPath(
-                            new BezierLine(new Pose(133, 33), new Pose(84.656, 73.828))
+                            new BezierLine(new Pose(18, 17), new Pose(144-88.489, 82.754))
                     )
-                    .setConstantHeadingInterpolation(Math.toRadians(0))
+                    .setLinearHeadingInterpolation(Math.toRadians(-90), Math.toRadians(180))
+                    .build();
+
+            Path12 = follower
+                    .pathBuilder()
+                    .addPath(
+                            new BezierCurve(
+                                    new Pose(144-124.541, 35.232),
+                                    new Pose(22, 62),
+                                    new Pose(18, 72)
+                            )
+                    )
+                    .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(-90))
                     .build();
 
             Path9 = follower
                     .pathBuilder()
                     .addPath(
-                            new BezierLine(new Pose(84.656, 73.828), new Pose(95, 73.828))
+                            new BezierLine(new Pose(144-88.489, 82.754), new Pose(144-130, 72))
                     )
-                    .setConstantHeadingInterpolation(Math.toRadians(0))
+                    .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(175))
+                    .build();
+
+            Path10 = follower
+                    .pathBuilder()
+                    .addPath(
+                            new BezierCurve(new Pose(144-128, 73), new Pose(66, 67)
+                            , new Pose(18, 50))
+                    )
+                    .setLinearHeadingInterpolation(Math.toRadians(175), Math.toRadians(180))
+                    .build();
+
+            Path11 = follower
+                    .pathBuilder()
+                    .addPath(
+                            new BezierLine(new Pose(18, 50), new Pose(52, 76))
+                    )
+                    .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(180))
                     .build();
         }
     }
@@ -339,4 +335,7 @@ public class RedAutoLimelight extends OpMode {
 //        return (-8.8 * meters) + 76.16;
         return (-4.8701*meters) + 59.754;
     }
+
 }
+
+
