@@ -17,7 +17,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 @Config
 public class Shooter {
 
-        public static double kP = 0.0016, kI, kD, kF = 0.00018;
+        public static double kP = 0.0018, kI, kD, kF = 0.00018;
         private PIDController velController;
 
         private DcMotorEx shooter, shooter2; private Servo rightHood, leftHood;

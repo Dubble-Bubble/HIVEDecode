@@ -18,7 +18,7 @@ public class Intake {
     private boolean intakeActivityFlag = false;
     private boolean reverseFlag = false;
 
-    public static double flapUp = 0.77, flapDown = 0.9, ptoEngaged = 0.15, ptoDisengaged = 0;
+    public static double flapUp = 0.77, flapDown = 0.93, ptoEngaged = 0.15, ptoDisengaged = 0;
 
     public Intake(HardwareMap hardwareMap) {
         intake = hardwareMap.dcMotor.get("intake");
@@ -39,6 +39,13 @@ public class Intake {
     public void setTransfer(boolean transfer) {
         if (transfer) {
             this.transfer.setPower(-1);
+        } else {
+            this.transfer.setPower(0);
+        }
+    }
+    public void setTransferSlower(boolean transfer) {
+        if (transfer) {
+            this.transfer.setPower(-0.8);
         } else {
             this.transfer.setPower(0);
         }

@@ -21,6 +21,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 import org.firstinspires.ftc.teamcode.systems.Drivebase;
 import org.firstinspires.ftc.teamcode.systems.Intake;
 import org.firstinspires.ftc.teamcode.systems.Localizer;
@@ -32,15 +33,18 @@ import org.firstinspires.ftc.teamcode.systems.Turret;
 public class BlueTele extends OpMode {
 
     private Drivebase drivebase; private Intake intake; private Shooter shooter; private Turret turret;
+    public static double offset = 4;
 
     GamepadEx controller;
 
-    private boolean isDpadDownPressed = false, isDpadRightPressed = false, isAPressed = false, isDpadUpPressed = false, shootingMode = false, close = true, flapUp = false;
+    private boolean isDpadDownPressed = false, isBPressed = false, isAPressed = false, isDpadUpPressed = false, shootingMode = false, close = true, isYPressed = false;
 
     private GoBildaPinpointDriver pinpoint;
     public static GoBildaPinpointDriver.EncoderDirection yDirection, xDirection;
 
     public double xPos, yPos, meters;
+
+    Limelight3A limelight3A;
 
 
     @Override
@@ -61,7 +65,12 @@ public class BlueTele extends OpMode {
 
         turret = new Turret(hardwareMap, false);
 
+        limelight3A = hardwareMap.get(Limelight3A.class, "ll3a");
+        limelight3A.setPollRateHz(250);
+        limelight3A.start();
+
         shooter = new Shooter(hardwareMap, telemetry);
+        turret.setOffset(offset);
     }
 
     double looptime = 0; boolean turretUpdateFlag = true;
@@ -76,6 +85,10 @@ public class BlueTele extends OpMode {
         telemetry.addData("loop time (hz)", (1000/looptime));
 
         pinpoint.update();
+
+        if (gamepad1.b && !isBPressed) {
+            pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, 8.795, 8, AngleUnit.RADIANS, Math.toRadians(180)));
+        } isBPressed = gamepad1.b;
 
         if (gamepad1.a && !isAPressed) {
             pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, 144-8.795, 8, AngleUnit.RADIANS, 0));
@@ -123,7 +136,7 @@ public class BlueTele extends OpMode {
             shooter.runShooter();
         } else {
             turret.setMode(Turret.Mode.fixed);
-            turret.setTargetDegrees(turret.getTurretAngle());
+            turret.setTargetDegrees(0);
             shooter.stopShooter();
         }
 
@@ -133,8 +146,20 @@ public class BlueTele extends OpMode {
         telemetry.addData("pose y", yPos);
         telemetry.addData("heading", Math.toDegrees(heading));
 
+
+        if (gamepad1.y && !isYPressed && !limelight3A.getLatestResult().getFiducialResults().isEmpty()) {
+            Pose3D pose3 = limelight3A.getLatestResult().getBotpose();
+            double rawHeadingRead = pose3.getOrientation().getYaw(AngleUnit.DEGREES);
+            if (Math.signum(rawHeadingRead) < 0) {
+                rawHeadingRead += 360;
+            }
+            pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, 72+(pose3.getPosition().y*39.37), 72-(pose3.getPosition().x*39.37), AngleUnit.DEGREES,
+                    rawHeadingRead-90));
+        } isYPressed = gamepad1.y;
+
         intake.update();
         drivebase.update();
+        turret.setOffset(offset);
         turret.update();
         telemetry.update();
 

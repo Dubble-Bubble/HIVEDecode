@@ -25,7 +25,7 @@ public class Newshooter extends OpMode {
     public static double shooterRpm = 0, intakePower = 0, hoodPosition = 0, p = 0;
     public static double kP = 0.0016, kI, kD, kF = 0.00018;
     public static Servo.Direction rHoodDirection = Servo.Direction.FORWARD, lHoodDirection = Servo.Direction.FORWARD;
-    DcMotorSimple.Direction direction1 = DcMotorSimple.Direction.REVERSE, direction2 = DcMotorSimple.Direction.FORWARD;
+    DcMotorSimple.Direction direction1 = DcMotorSimple.Direction.FORWARD, direction2 = DcMotorSimple.Direction.FORWARD;
     VoltageSensor voltageSensor;
 
     @Override
@@ -47,12 +47,14 @@ public class Newshooter extends OpMode {
         transfer = hardwareMap.dcMotor.get("transfer");
     }
 
+    public static double signVel = 1;
+
     @Override
     public void loop() {
         velController.setPID(kP, kI, kD);
         double encoderVelocity = shooter.getVelocity();
 
-        double rpm = (encoderVelocity*60)/28;
+        double rpm = (encoderVelocity*60)/28*signVel;
         telemetry.addData("rpm", rpm);
         telemetry.update();
 

@@ -18,6 +18,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.teamcode.opmodes.commands.FraudInstantCommand;
+import org.firstinspires.ftc.teamcode.opmodes.commands.FraudWaitCommand;
 import org.firstinspires.ftc.teamcode.opmodes.commands.IntakeCommand;
 import org.firstinspires.ftc.teamcode.opmodes.commands.PedroFollowCommand;
 import org.firstinspires.ftc.teamcode.opmodes.commands.StopShooter;
@@ -69,16 +70,26 @@ public class Blue18Ball extends OpMode {
                 new SequentialCommandGroup(
                         new FraudInstantCommand(()->{
                             intake.setFlap(Intake.flapUp);
+                            turret.setOffset(4);
                         }),
                         new IntakeCommand(intake, Intake.flapUp, 1),
+                        new FraudInstantCommand(
+                                ()->turret.update()
+                        ),
                         new PedroFollowCommand(follower, Path1),
-                        new WaitCommand(250),
+                        new FraudInstantCommand(
+                                ()->turret.update()
+                        ),
+                        new FraudInstantCommand(
+                                ()->turret.update()
+                        ),
+                        new FraudWaitCommand(300),
                         new FraudInstantCommand(()->{
                             intake.setTransfer(true);
+                            turret.update();
                         }),
                         new WaitCommand(600),
                         new ParallelCommandGroup(
-                                new IntakeCommand(intake, Intake.flapDown, 1),
                                 new FraudInstantCommand(()->{
                                     intake.setTransfer(false);
                                 })
@@ -87,16 +98,22 @@ public class Blue18Ball extends OpMode {
                                 new PedroFollowCommand(follower, Gurt),
                                 new IntakeCommand(intake, Intake.flapDown, 1)
                         ),
+                        new FraudInstantCommand(
+                                ()->turret.update()
+                        ),
                         new ParallelCommandGroup(
                                 new PedroFollowCommand(follower, Path2),
                                 new IntakeCommand(intake, Intake.flapUp, 1)
                         ),
+                        new FraudInstantCommand(
+                                ()->turret.update()
+                        ),
+                        new WaitCommand(300),
                         new FraudInstantCommand(()->{
                             intake.setTransfer(true);
                         }),
                         new WaitCommand(700),
                         new ParallelCommandGroup(
-                                new IntakeCommand(intake, Intake.flapDown, 1),
                                 new FraudInstantCommand(()->{
                                     intake.setTransfer(false);
                                 })
@@ -105,16 +122,22 @@ public class Blue18Ball extends OpMode {
                                 new PedroFollowCommand(follower, Path3),
                                 new IntakeCommand(intake, Intake.flapDown, 1)
                         ),
-                        new ParallelCommandGroup(
-                                new PedroFollowCommand(follower, Path4),
-                                new IntakeCommand(intake, Intake.flapUp, 1)
+                        new FraudInstantCommand(
+                                ()->turret.update()
                         ),
+                        new ParallelCommandGroup(
+                                new PedroFollowCommand(follower, Path4)
+                        ),
+                        new FraudInstantCommand(
+                                ()->turret.update()
+                        ),
+                        new WaitCommand(300),
                         new FraudInstantCommand(()->{
+                            intake.setFlap(Intake.flapUp);
                             intake.setTransfer(true);
                         }),
                         new WaitCommand(700),
                         new ParallelCommandGroup(
-                                new IntakeCommand(intake, Intake.flapDown, 1),
                                 new FraudInstantCommand(()->{
                                     intake.setTransfer(false);
                                 })
@@ -122,18 +145,26 @@ public class Blue18Ball extends OpMode {
                         new ParallelCommandGroup(
                                 new SequentialCommandGroup(
                                         new PedroFollowCommand(follower, Path5),
-                                        new WaitCommand(100),
+                                        new WaitCommand(200),
+                                        new IntakeCommand(intake, Intake.flapDown, 1),
                                         new PedroFollowCommand(follower, paths.PathHalf)
                                 ),
                                 new IntakeCommand(intake, Intake.flapDown, 1)
                         ),
-                        new WaitCommand(1000),
+                        new FraudInstantCommand(
+                                ()->turret.update()
+                        ),
+                        new WaitCommand(900),
 //                        new FraudInstantCommand(()->{
 //                            shooter.setTargetRPM(4300);
 //                        }),
                         new IntakeCommand(intake, Intake.flapDown, 0),
                         new PedroFollowCommand(follower, Path6),
                         new IntakeCommand(intake, Intake.flapDown, 1),
+                        new FraudInstantCommand(
+                                ()->turret.update()
+                        ),
+                        new WaitCommand(300),
                         new FraudInstantCommand(()->{
                             intake.setFlap(Intake.flapUp);
                             intake.setTransfer(true);
@@ -148,18 +179,25 @@ public class Blue18Ball extends OpMode {
                         new ParallelCommandGroup(
                                 new SequentialCommandGroup(
                                         new PedroFollowCommand(follower, Path5),
-                                        new WaitCommand(100),
+                                        new WaitCommand(200),
                                         new PedroFollowCommand(follower, paths.PathHalf)
                                 ),
                                 new IntakeCommand(intake, Intake.flapDown, 1)
                         ),
-                        new WaitCommand(1000),
+                        new FraudInstantCommand(
+                                ()->turret.update()
+                        ),
+                        new WaitCommand(900),
 //                        new FraudInstantCommand(()->{
 //                            shooter.setTargetRPM(4300);
 //                        }),
                         new IntakeCommand(intake, Intake.flapDown, 0),
                         new PedroFollowCommand(follower, Path6),
                         new IntakeCommand(intake, Intake.flapDown, 1),
+                        new FraudInstantCommand(
+                                ()->turret.update()
+                        ),
+                        new WaitCommand(300),
                         new FraudInstantCommand(()->{
                             intake.setFlap(Intake.flapUp);
                             intake.setTransfer(true);
@@ -173,12 +211,18 @@ public class Blue18Ball extends OpMode {
                         ),
                         new ParallelCommandGroup(
                                 new PedroFollowCommand(follower, Path7),
-
                                 new IntakeCommand(intake, Intake.flapDown, 1)
+                        ),
+                        new FraudInstantCommand(
+                                ()->turret.update()
                         ),
                         new IntakeCommand(intake, Intake.flapDown, 0),
                         new PedroFollowCommand(follower, Path8),
                         new IntakeCommand(intake, Intake.flapDown, 1),
+                        new FraudInstantCommand(
+                                ()->turret.update()
+                        ),
+                        new WaitCommand(300),
                         new FraudInstantCommand(()->{
                             intake.setFlap(Intake.flapUp);
                             intake.setTransfer(true);
@@ -188,38 +232,17 @@ public class Blue18Ball extends OpMode {
                                 new IntakeCommand(intake, Intake.flapDown, 1),
                                 new FraudInstantCommand(()->{
                                     intake.setTransfer(false);
+                                    turret.setOffset(0);
                                 })
                         ),
                         new PedroFollowCommand(follower, Path9),
                         new StopShooter(shooter),
                         new IntakeCommand(intake, Intake.flapDown, 0)
-
-//                        new ParallelCommandGroup(
-//                                new ManualShooterInputCommand(shooter, 4800, 1.3, 55),
-//                                new SequentialCommandGroup(
-//                                        new WaitCommand(400),
-//                                        new IntakeCommand(intake, Intake.flapUp, 1)
-//                                )
-//                        ),
-//                        new ParallelCommandGroup(
-//                                new PedroFollowCommand(follower, Path5),
-//                                new IntakeCommand(intake, Intake.flapDown, 1)
-//                        ),
-//                        new ParallelCommandGroup(
-//                                new PedroFollowCommand(follower, Path6),
-//                                new IntakeCommand(intake, Intake.flapDown, 0)
-//                        ),
-//                        new IntakeCommand(intake, Intake.flapUp, 1),
-//                        new ParallelCommandGroup(
-//                                new ManualShooterInputCommand(shooter, 6000, 1.3, 50),
-//                                new SequentialCommandGroup(
-//                                        new WaitCommand(400),
-//                                        new IntakeCommand(intake, Intake.flapUp, 1)
-//                                )
-//                        )
                 )
         );
 
+        turret.setPose(new Pair<>(32.0, 135.6), -90);
+        intake.setFlap(Intake.flapUp);
     }
 
     private Pose pose; private double meters;
@@ -233,17 +256,18 @@ public class Blue18Ball extends OpMode {
         turret.setPose(new Pair<>(pose.getX(), pose.getY()), Math.toDegrees(pose.getHeading()));
 
         meters = turret.distanceToGoal(pose.getX(), pose.getY()) * 0.0254;
-        shooter.setTargetRPM(shooter.getRPMForShot(meters)+1350);
+        shooter.setTargetRPM(shooter.getRPMForShot(meters)+1200);
         shooter.setHoodAngle(shooter.getHoodAngle(meters));
 
         shooter.runShooter();
-        turret.update();
+
+        PurpleAutoLimelight.endpose = new Pose2D(DistanceUnit.INCH, pose.getX(), pose.getY(), AngleUnit.RADIANS, pose.getHeading());
     }
 
     @Override
     public void stop() {
         Pose pose = follower.getPose();
-        endpose = new Pose2D(DistanceUnit.INCH, pose.getX(), pose.getY(), AngleUnit.RADIANS, pose.getHeading());
+        PurpleAutoLimelight.endpose = new Pose2D(DistanceUnit.INCH, pose.getX(), pose.getY(), AngleUnit.RADIANS, pose.getHeading());
     }
 
 
@@ -321,7 +345,7 @@ public class Blue18Ball extends OpMode {
                     .addPath(
                             new BezierLine(new Pose(17, 70), new Pose(11, 53))
                     )
-                    .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(137))
+                    .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(145))
                     .build();
 
             Path6 = follower
@@ -329,7 +353,7 @@ public class Blue18Ball extends OpMode {
                     .addPath(
                             new BezierLine(new Pose(11, 53), new Pose(57, 75))
                     )
-                    .setLinearHeadingInterpolation(Math.toRadians(137), Math.toRadians(180))
+                    .setLinearHeadingInterpolation(Math.toRadians(145), Math.toRadians(180))
                     .build();
 
             Path7 = follower

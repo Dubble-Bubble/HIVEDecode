@@ -27,7 +27,7 @@ public class ShotAlgTest extends OpMode {
     private DcMotorEx intake;
     private PIDController controller;
 
-    public static double c = 1320, f = 1900;
+    public static double c = 1290, f = 1900;
 
     public double getRPMForShot(double meters) {
 //        return (211.43 * meters) + 1177;

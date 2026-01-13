@@ -26,7 +26,7 @@ public class Turret {
 
     public static double p = 0.035, maxDelta;
 
-    private Pair<Double, Double> redGoal = new Pair<>(144.0, 144.0), blueGoal = new Pair<>(0.0, 140.0);
+    private Pair<Double, Double> redGoal = new Pair<>(144.0, 144.0), blueGoal = new Pair<>(0.0, 144.0);
     private Pair<Double, Double> pose;
     private double headingDeg = 0, targetDeg = 0, odoTarget = 0, turretAngle = 0, error = 0, trueTarget = 0, ltd = 0;
 

@@ -5,7 +5,9 @@ import static org.firstinspires.ftc.teamcode.tests.ShotAlgTest.f;
 
 import android.util.Pair;
 
+import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.arcrobotics.ftclib.controller.PIDController;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
@@ -16,11 +18,13 @@ import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.IMU;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
+import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 import org.firstinspires.ftc.teamcode.systems.Drivebase;
 import org.firstinspires.ftc.teamcode.systems.Intake;
 import org.firstinspires.ftc.teamcode.systems.Localizer;
@@ -35,12 +39,13 @@ public class RedTele extends OpMode {
 
     GamepadEx controller;
 
-    private boolean isDpadDownPressed = false, isBPressed = false, isAPressed = false, isDpadUpPressed = false, shootingMode = false, close = true, flapUp = false;
+    private boolean isDpadDownPressed = false, isBPressed = false, isAPressed = false, isYPressed = false, shootingMode = false, close = true, flapUp = false;
 
     private GoBildaPinpointDriver pinpoint;
     public static GoBildaPinpointDriver.EncoderDirection yDirection, xDirection;
 
     public double xPos, yPos, meters;
+    Limelight3A limelight3A;
 
 
     @Override
@@ -62,6 +67,12 @@ public class RedTele extends OpMode {
         turret = new Turret(hardwareMap, true);
 
         shooter = new Shooter(hardwareMap, telemetry);
+
+        telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
+
+        limelight3A = hardwareMap.get(Limelight3A.class, "ll3a");
+        limelight3A.setPollRateHz(250);
+        limelight3A.start();
     }
 
     double looptime = 0; boolean turretUpdateFlag = true;
@@ -130,6 +141,18 @@ public class RedTele extends OpMode {
             turret.setTargetDegrees(0);
             shooter.stopShooter();
         }
+
+        turret.setOffset(4);
+
+        if (gamepad1.y && !isYPressed && !limelight3A.getLatestResult().getFiducialResults().isEmpty()) {
+            Pose3D pose3 = limelight3A.getLatestResult().getBotpose();
+            double rawHeadingRead = pose3.getOrientation().getYaw(AngleUnit.DEGREES);
+            if (Math.signum(rawHeadingRead) < 0) {
+                rawHeadingRead += 360;
+            }
+            pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, 72+(pose3.getPosition().y*39.37), 72-(pose3.getPosition().x*39.37), AngleUnit.DEGREES,
+                    rawHeadingRead-90));
+        } isYPressed = gamepad1.y;
 
         telemetry.addData("is shootingModeOn", shootingMode);
         telemetry.addData("is close", close);
