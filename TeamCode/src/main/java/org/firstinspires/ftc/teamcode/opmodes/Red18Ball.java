@@ -61,6 +61,7 @@ public class Red18Ball extends OpMode {
         scheduler = CommandScheduler.getInstance(); scheduler.reset(); scheduler = CommandScheduler.getInstance();
         shooter.setHoodAngle(50);
 
+
         scheduler.schedule(
                 new SequentialCommandGroup(
                         new FraudInstantCommand(()->{
@@ -74,12 +75,11 @@ public class Red18Ball extends OpMode {
                         new FraudInstantCommand(()->{
                             intake.setTransfer(true);
                         }),
-                        new WaitCommand(500),
+                        new WaitCommand(700),
                         new ParallelCommandGroup(
                                 new IntakeCommand(intake, Intake.flapDown, 1),
                                 new FraudInstantCommand(()->{
                                     intake.setTransfer(false);
-                                    turret.setOffset(4);
                                 })
                         ),
                         new ParallelCommandGroup(
@@ -93,16 +93,15 @@ public class Red18Ball extends OpMode {
                                 new IntakeCommand(intake, Intake.flapUp, 1)
                         ),
                         new FraudInstantCommand(()-> turret.update()),
-                        new WaitCommand(400),
+                        new WaitCommand(250),
                         new FraudInstantCommand(()->{
                             intake.setTransfer(true);
                         }),
-                        new WaitCommand(600),
+                        new WaitCommand(700),
                         new ParallelCommandGroup(
                                 new IntakeCommand(intake, Intake.flapDown, 1),
                                 new FraudInstantCommand(()->{
                                     intake.setTransfer(false);
-                                    turret.setOffset(0);
                                 })
                         ),
                         new ParallelCommandGroup(
@@ -121,7 +120,7 @@ public class Red18Ball extends OpMode {
                             intake.setFlap(Intake.flapUp);
                             intake.setTransfer(true);
                         }),
-                        new WaitCommand(600),
+                        new WaitCommand(800),
                         new ParallelCommandGroup(
                                 new IntakeCommand(intake, Intake.flapDown, 1),
                                 new FraudInstantCommand(()->{
@@ -136,7 +135,7 @@ public class Red18Ball extends OpMode {
                                 ),
                                 new IntakeCommand(intake, Intake.flapDown, 1)
                         ),
-                        new WaitCommand(900),
+                        new WaitCommand(300),
 //                        new FraudInstantCommand(()->{
 //                            shooter.setTargetRPM(4300);
 //                        }),
@@ -152,7 +151,7 @@ public class Red18Ball extends OpMode {
                             intake.setFlap(Intake.flapUp);
                             intake.setTransfer(true);
                         }),
-                        new WaitCommand(600),
+                        new WaitCommand(800),
                         new ParallelCommandGroup(
                                 new IntakeCommand(intake, Intake.flapDown, 1),
                                 new FraudInstantCommand(()->{
@@ -167,7 +166,7 @@ public class Red18Ball extends OpMode {
                                 ),
                                 new IntakeCommand(intake, Intake.flapDown, 1)
                         ),
-                        new WaitCommand(900),
+                        new WaitCommand(300),
 //                        new FraudInstantCommand(()->{
 //                            shooter.setTargetRPM(4300);
 //                        }),
@@ -183,7 +182,7 @@ public class Red18Ball extends OpMode {
                             intake.setFlap(Intake.flapUp);
                             intake.setTransfer(true);
                         }),
-                        new WaitCommand(600),
+                        new WaitCommand(800),
                         new ParallelCommandGroup(
                                 new IntakeCommand(intake, Intake.flapDown, 1),
                                 new FraudInstantCommand(()->{
@@ -207,7 +206,7 @@ public class Red18Ball extends OpMode {
                             intake.setFlap(Intake.flapUp);
                             intake.setTransfer(true);
                         }),
-                        new WaitCommand(600),
+                        new WaitCommand(800),
                         new ParallelCommandGroup(
                                 new IntakeCommand(intake, Intake.flapDown, 1),
                                 new FraudInstantCommand(()->{
@@ -225,6 +224,8 @@ public class Red18Ball extends OpMode {
 
         turret = new Turret(hardwareMap, true);
         turret.setMode(Turret.Mode.odo);
+
+        turret.setOffset(4);
 
     }
 

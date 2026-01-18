@@ -10,6 +10,7 @@ import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -17,7 +18,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 @Config
 public class Shooter {
 
-        public static double kP = 0.0018, kI, kD, kF = 0.00018;
+        public static double kP = 0.004, kI, kD, kF = 0.0002;
         private PIDController velController;
 
         private DcMotorEx shooter, shooter2; private Servo rightHood, leftHood;
@@ -63,10 +64,6 @@ public class Shooter {
 
 //            ll3a = hardwareMap.get(Limelight3A.class, "ll3a");
 
-            encoder = hardwareMap.analogInput.get("encoder");
-
-            turretPID = new PIDController(p, i, d);
-
             velController = new PIDController(kP, kI, kD);
         }
 
@@ -87,24 +84,32 @@ public class Shooter {
 
     public static double maxTheoreticalRPM = 6461.9047619;
 
-    private double maxRPM = 48.67;
+    private double maxRPM = 48.67, rpm = 0, power = 0, scalar = 0;
+
+    ElapsedTime functionRunLength = new ElapsedTime();
+    private double runMs = 0;
 
     public void runShooter() {
-        velController.setPID(kP, kI, kD);
+        functionRunLength.reset();
         encoderVelocity = -shooter.getVelocity();
 
-        double rpm = (encoderVelocity*60)/28;
+        rpm = (encoderVelocity*60)/28;
         readRPM = rpm;
 
-        double power = velController.calculate(rpm, targetRPM) + (kF*targetRPM);
+        power = velController.calculate(rpm, targetRPM) + (kF*targetRPM);
 
-        double scalar = 13.0/voltageSensor.getVoltage();
+        scalar = 13.2/voltageSensor.getVoltage();
 
         shooter.setPower(power*scalar);
         shooter2.setPower(power*scalar);
+        runMs = functionRunLength.milliseconds();
     }
 
-        public double getRPMForShot(double meters) {
+    public double getRunMs() {
+        return runMs;
+    }
+
+    public double getRPMForShot(double meters) {
 //        return (211.43 * meters) + 1177;
             return (227.87*meters) + 1382.7;
         }

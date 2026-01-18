@@ -36,6 +36,12 @@ public class Turret {
         limelight
     }
 
+    private double xOffset = 0, yOffset = 0;
+
+    public void setAimPointOffset(double xOffset, double yOffset) {
+        this.xOffset = xOffset; this.yOffset = yOffset;
+    }
+
     private boolean red = false;
 
     public void setTargetDegrees(double targetDegrees) {
@@ -46,10 +52,6 @@ public class Turret {
         s1 = hardwareMap.servo.get("cts");
         s2 = hardwareMap.servo.get("mts");
         s3 = hardwareMap.servo.get("fts");
-
-        ll3a = hardwareMap.get(Limelight3A.class, "ll3a");
-        ll3a.setPollRateHz(250);
-        ll3a.start();
 
         encoder = hardwareMap.analogInput.get("encoder");
         this.red = red;
@@ -80,11 +82,11 @@ public class Turret {
             case odo:
                 if (red) {
                     odoTarget = Math.atan(
-                            (redGoal.second - pose.second)/(redGoal.first - pose.first)
+                            ((redGoal.second+yOffset) - pose.second)/((redGoal.first+xOffset) - pose.first)
                     );
                 } else {
                     odoTarget = Math.atan2(
-                            (blueGoal.second - pose.second),(blueGoal.first - pose.first)
+                            ((blueGoal.second+yOffset) - pose.second),((blueGoal.first+xOffset) - pose.first)
                     );
                 }
 
@@ -156,10 +158,10 @@ public class Turret {
 
     public double distanceToGoal(double xPosition, double yPosition) {
         if (red) {
-            return Math.hypot((redGoal.first-xPosition), (redGoal.second-yPosition));
+            return Math.hypot(((redGoal.first+xOffset)-xPosition), ((redGoal.second+yOffset)-yPosition));
 
         } else {
-            return Math.hypot((blueGoal.first-xPosition), (blueGoal.second-yPosition));
+            return Math.hypot(((blueGoal.first+xOffset)-xPosition), ((blueGoal.second+yOffset)-yPosition));
         }
     }
 

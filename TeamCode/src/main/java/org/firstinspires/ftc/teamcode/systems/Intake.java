@@ -38,14 +38,14 @@ public class Intake {
 
     public void setTransfer(boolean transfer) {
         if (transfer) {
-            this.transfer.setPower(-1);
+            this.transfer.setPower(-0.9);
         } else {
             this.transfer.setPower(0);
         }
     }
     public void setTransferSlower(boolean transfer) {
         if (transfer) {
-            this.transfer.setPower(-0.8);
+            this.transfer.setPower(-1);
         } else {
             this.transfer.setPower(0);
         }

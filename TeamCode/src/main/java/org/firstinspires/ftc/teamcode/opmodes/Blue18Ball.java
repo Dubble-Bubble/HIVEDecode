@@ -1,7 +1,12 @@
 package org.firstinspires.ftc.teamcode.opmodes;
 
+import static org.firstinspires.ftc.teamcode.tests.ShotAlgTest.c;
+
 import android.util.Pair;
 
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.arcrobotics.ftclib.command.CommandScheduler;
 import com.arcrobotics.ftclib.command.ParallelCommandGroup;
 import com.arcrobotics.ftclib.command.SequentialCommandGroup;
@@ -11,9 +16,12 @@ import com.pedropathing.geometry.BezierCurve;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.PathChain;
+import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
+import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
@@ -27,7 +35,10 @@ import org.firstinspires.ftc.teamcode.systems.Intake;
 import org.firstinspires.ftc.teamcode.systems.Shooter;
 import org.firstinspires.ftc.teamcode.systems.Turret;
 
+import java.util.List;
+
 @Autonomous
+@Config
 public class Blue18Ball extends OpMode {
 
     Follower follower;
@@ -45,6 +56,10 @@ public class Blue18Ball extends OpMode {
     CommandScheduler scheduler;
 
     Turret turret;
+
+    List<LynxModule> allHubs;
+
+    public static double backHalfBrakeTime = 8, breakStart = 0.5;
 
     @Override
     public void init() {
@@ -70,7 +85,7 @@ public class Blue18Ball extends OpMode {
                 new SequentialCommandGroup(
                         new FraudInstantCommand(()->{
                             intake.setFlap(Intake.flapUp);
-                            turret.setOffset(4);
+                            turret.setOffset(3);
                         }),
                         new IntakeCommand(intake, Intake.flapUp, 1),
                         new FraudInstantCommand(
@@ -83,12 +98,12 @@ public class Blue18Ball extends OpMode {
                         new FraudInstantCommand(
                                 ()->turret.update()
                         ),
-                        new FraudWaitCommand(300),
+                        new FraudWaitCommand(500),
                         new FraudInstantCommand(()->{
                             intake.setTransfer(true);
                             turret.update();
                         }),
-                        new WaitCommand(600),
+                        new WaitCommand(700),
                         new ParallelCommandGroup(
                                 new FraudInstantCommand(()->{
                                     intake.setTransfer(false);
@@ -108,7 +123,7 @@ public class Blue18Ball extends OpMode {
                         new FraudInstantCommand(
                                 ()->turret.update()
                         ),
-                        new WaitCommand(300),
+                        new WaitCommand(500),
                         new FraudInstantCommand(()->{
                             intake.setTransfer(true);
                         }),
@@ -131,7 +146,7 @@ public class Blue18Ball extends OpMode {
                         new FraudInstantCommand(
                                 ()->turret.update()
                         ),
-                        new WaitCommand(300),
+                        new WaitCommand(500),
                         new FraudInstantCommand(()->{
                             intake.setFlap(Intake.flapUp);
                             intake.setTransfer(true);
@@ -145,7 +160,6 @@ public class Blue18Ball extends OpMode {
                         new ParallelCommandGroup(
                                 new SequentialCommandGroup(
                                         new PedroFollowCommand(follower, Path5),
-                                        new WaitCommand(200),
                                         new IntakeCommand(intake, Intake.flapDown, 1),
                                         new PedroFollowCommand(follower, paths.PathHalf)
                                 ),
@@ -154,17 +168,22 @@ public class Blue18Ball extends OpMode {
                         new FraudInstantCommand(
                                 ()->turret.update()
                         ),
-                        new WaitCommand(900),
+                        new WaitCommand(300),
 //                        new FraudInstantCommand(()->{
 //                            shooter.setTargetRPM(4300);
 //                        }),
-                        new IntakeCommand(intake, Intake.flapDown, 0),
-                        new PedroFollowCommand(follower, Path6),
+                        new ParallelCommandGroup(
+                                new SequentialCommandGroup(
+                                        new WaitCommand(1200),
+                                        new IntakeCommand(intake, Intake.flapDown, 0)
+                                        ),
+                                new PedroFollowCommand(follower, Path6)
+                        ),
                         new IntakeCommand(intake, Intake.flapDown, 1),
                         new FraudInstantCommand(
                                 ()->turret.update()
                         ),
-                        new WaitCommand(300),
+                        new WaitCommand(500),
                         new FraudInstantCommand(()->{
                             intake.setFlap(Intake.flapUp);
                             intake.setTransfer(true);
@@ -179,7 +198,6 @@ public class Blue18Ball extends OpMode {
                         new ParallelCommandGroup(
                                 new SequentialCommandGroup(
                                         new PedroFollowCommand(follower, Path5),
-                                        new WaitCommand(200),
                                         new PedroFollowCommand(follower, paths.PathHalf)
                                 ),
                                 new IntakeCommand(intake, Intake.flapDown, 1)
@@ -187,17 +205,22 @@ public class Blue18Ball extends OpMode {
                         new FraudInstantCommand(
                                 ()->turret.update()
                         ),
-                        new WaitCommand(900),
+                        new WaitCommand(300),
 //                        new FraudInstantCommand(()->{
 //                            shooter.setTargetRPM(4300);
 //                        }),
-                        new IntakeCommand(intake, Intake.flapDown, 0),
-                        new PedroFollowCommand(follower, Path6),
+                        new ParallelCommandGroup(
+                                new SequentialCommandGroup(
+                                        new WaitCommand(1200),
+                                        new IntakeCommand(intake, Intake.flapDown, 0)
+                                ),
+                                new PedroFollowCommand(follower, Path6)
+                        ),
                         new IntakeCommand(intake, Intake.flapDown, 1),
                         new FraudInstantCommand(
                                 ()->turret.update()
                         ),
-                        new WaitCommand(300),
+                        new WaitCommand(500),
                         new FraudInstantCommand(()->{
                             intake.setFlap(Intake.flapUp);
                             intake.setTransfer(true);
@@ -222,7 +245,7 @@ public class Blue18Ball extends OpMode {
                         new FraudInstantCommand(
                                 ()->turret.update()
                         ),
-                        new WaitCommand(300),
+                        new WaitCommand(500),
                         new FraudInstantCommand(()->{
                             intake.setFlap(Intake.flapUp);
                             intake.setTransfer(true);
@@ -232,7 +255,6 @@ public class Blue18Ball extends OpMode {
                                 new IntakeCommand(intake, Intake.flapDown, 1),
                                 new FraudInstantCommand(()->{
                                     intake.setTransfer(false);
-                                    turret.setOffset(0);
                                 })
                         ),
                         new PedroFollowCommand(follower, Path9),
@@ -243,31 +265,84 @@ public class Blue18Ball extends OpMode {
 
         turret.setPose(new Pair<>(32.0, 135.6), -90);
         intake.setFlap(Intake.flapUp);
+
+        telemetry = new MultipleTelemetry(FtcDashboard.getInstance().getTelemetry(), telemetry);
+
+        allHubs = hardwareMap.getAll(LynxModule.class);
+
+        for (LynxModule hub : allHubs) {
+            hub.setBulkCachingMode(LynxModule.BulkCachingMode.MANUAL);
+        }
     }
 
     private Pose pose; private double meters;
 
+    double looptime = 0; boolean turretUpdateFlag = true;
+    ElapsedTime looptimer = new ElapsedTime();
+    ElapsedTime functionTimer = new ElapsedTime();
+
+    double e1 = 0, e2 = 0, e3 = 0, e4 = 0, e5 = 0, loops =0;
+
     @Override
     public void loop() {
+        looptimer.reset();
+
+        telemetry.addData("loop time (ms)", looptime);
+        telemetry.addData("loop time (hz)", (1000/looptime));
+
+        for (LynxModule hub : allHubs) {
+            hub.clearBulkCache();
+        }
+
+        telemetry.addData("Telemetry, timer handling bulkread, pose ascription 2 time (ms)", functionTimer.milliseconds());
+
+        functionTimer.reset();
         scheduler.run();
-        follower.update();
+        telemetry.addData("CommandScheduler function time (ms)", functionTimer.milliseconds());
+
+        functionTimer.reset();
         pose = follower.getPose();
-
         turret.setPose(new Pair<>(pose.getX(), pose.getY()), Math.toDegrees(pose.getHeading()));
+        telemetry.addData("Pose ascription (ms)", functionTimer.milliseconds());
 
+        functionTimer.reset();
+        turret.update();
+        telemetry.addData("Turret function time (ms)", functionTimer.milliseconds());
+        e1 += functionTimer.milliseconds();
+
+        functionTimer.reset();
+        follower.update();
+        telemetry.addData("Pedro function time (ms)", functionTimer.milliseconds());
+        e2 += functionTimer.milliseconds();
+
+        functionTimer.reset();
         meters = turret.distanceToGoal(pose.getX(), pose.getY()) * 0.0254;
-        shooter.setTargetRPM(shooter.getRPMForShot(meters)+1200);
+        shooter.setTargetRPM(shooter.getRPMForShot(meters) + 1530);
         shooter.setHoodAngle(shooter.getHoodAngle(meters));
+        telemetry.addData("Shooter Calculation time", functionTimer.milliseconds());
+        e3 += functionTimer.milliseconds();
 
         shooter.runShooter();
+        telemetry.addData("RunShooter function time (ms)", shooter.getRunMs());
+        e4 += functionTimer.milliseconds();
 
+        functionTimer.reset();
         PurpleAutoLimelight.endpose = new Pose2D(DistanceUnit.INCH, pose.getX(), pose.getY(), AngleUnit.RADIANS, pose.getHeading());
+        looptime = looptimer.milliseconds();
+        telemetry.update();
+        loops += 1;
+
+        telemetry.addData("Turret function average time (ms)", e1/loops);
+        telemetry.addData("Pedro function average time (ms)", e2/loops);
+        telemetry.addData("Shooter calc function average time (ms)", e3/loops);
+        telemetry.addData("Shooter function average time (ms)", e4/loops);
     }
 
     @Override
     public void stop() {
         Pose pose = follower.getPose();
         PurpleAutoLimelight.endpose = new Pose2D(DistanceUnit.INCH, pose.getX(), pose.getY(), AngleUnit.RADIANS, pose.getHeading());
+
     }
 
 
@@ -286,10 +361,11 @@ public class Blue18Ball extends OpMode {
             Path1 = follower
                     .pathBuilder()
                     .addPath(
-                            new BezierLine(new Pose(32, 135.6), new Pose(48.25, 85)
+                            new BezierLine(new Pose(32, 135.6), new Pose(55, 85)
                             )
                     )
                     .setLinearHeadingInterpolation(Math.toRadians(-90), Math.toRadians(180))
+                    .setVelocityConstraint(0)
                     .build();
 
             Gurt = follower
@@ -303,7 +379,7 @@ public class Blue18Ball extends OpMode {
             Path2 = follower
                     .pathBuilder()
                     .addPath(
-                            new BezierLine(new Pose(19, 82.969), new Pose(48.25, 85))
+                            new BezierLine(new Pose(19, 82.969), new Pose(55, 85))
                     )
                     .setConstantHeadingInterpolation(Math.toRadians(180))
                     .setVelocityConstraint(0)
@@ -315,18 +391,19 @@ public class Blue18Ball extends OpMode {
                             new BezierCurve(
                                     new Pose(48.25, 85),
                                     new Pose(56.8, 53.719),
-                                    new Pose(19, 59)
+                                    new Pose(19, 50)
                             )
                     )
-                    .setConstantHeadingInterpolation(Math.toRadians(180))
+                    .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(170))
                     .build();
 
             Path4 = follower
                     .pathBuilder()
                     .addPath(
-                            new BezierLine(new Pose(19, 59), new Pose(57, 75))
+                            new BezierLine(new Pose(19, 59), new Pose(55, 80))
                     )
                     .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(180))
+                    .setVelocityConstraint(0)
                     .build();
 
 
@@ -343,17 +420,21 @@ public class Blue18Ball extends OpMode {
             PathHalf = follower
                     .pathBuilder()
                     .addPath(
-                            new BezierLine(new Pose(17, 70), new Pose(11, 53))
+                            new BezierLine(new Pose(17, 70), new Pose(11, 56))
                     )
                     .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(145))
                     .build();
 
             Path6 = follower
                     .pathBuilder()
-                    .addPath(
-                            new BezierLine(new Pose(11, 53), new Pose(57, 75))
-                    )
+                    .addPath(new BezierLine(new Pose(11, 53), new Pose(17, 53)))
                     .setLinearHeadingInterpolation(Math.toRadians(145), Math.toRadians(180))
+                    .setHeadingConstraint(10)
+                    .addPath(
+                            new BezierLine(new Pose(11, 53), new Pose(55, 80))
+                    )
+                    .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(180))
+                    .setVelocityConstraint(0)
                     .build();
 
             Path7 = follower
@@ -371,9 +452,10 @@ public class Blue18Ball extends OpMode {
             Path8 = follower
                     .pathBuilder()
                     .addPath(
-                            new BezierLine(new Pose(15, 35), new Pose(57, 74.25))
+                            new BezierLine(new Pose(15, 35), new Pose(55, 80))
                     )
                     .setConstantHeadingInterpolation(Math.toRadians(180))
+                    .setVelocityConstraint(0)
                     .build();
 
             Path9 = follower
