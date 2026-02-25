@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.systems.squid;
+package org.firstinspires.ftc.teamcode.systems.pureP;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -7,18 +7,18 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 
 @Config
-public class SquIDDrive {
+public class PurePursuitSquidDrive {
 
     private DcMotor fl, fr, bl, br;
 
     private double d;
 
     public static DcMotor.ZeroPowerBehavior zeroPowerBehavior = DcMotor.ZeroPowerBehavior.BRAKE;
-    public static double runVoltage = 12;
+    public static double runVoltage = 12.7;
 
     private VoltageSensor voltageSensor;
 
-    public SquIDDrive(HardwareMap hardwareMap, VoltageSensor voltageSensor) {
+    public PurePursuitSquidDrive(HardwareMap hardwareMap, VoltageSensor voltageSensor) {
         fl = hardwareMap.dcMotor.get("fL");
         bl = hardwareMap.dcMotor.get("bL");
         fr = hardwareMap.dcMotor.get("fR");

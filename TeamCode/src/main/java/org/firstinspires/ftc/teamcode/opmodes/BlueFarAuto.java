@@ -17,12 +17,10 @@ import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
-import org.firstinspires.ftc.teamcode.opmodes.PurpleAutoLimelight;
 import org.firstinspires.ftc.teamcode.opmodes.commands.FraudInstantCommand;
 import org.firstinspires.ftc.teamcode.opmodes.commands.FraudWaitCommand;
 import org.firstinspires.ftc.teamcode.opmodes.commands.IntakeCommand;
 import org.firstinspires.ftc.teamcode.opmodes.commands.PedroFollowCommand;
-import org.firstinspires.ftc.teamcode.opmodes.commands.StopShooter;
 import org.firstinspires.ftc.teamcode.pedropathing.Constants;
 import org.firstinspires.ftc.teamcode.systems.Intake;
 import org.firstinspires.ftc.teamcode.systems.Shooter;
@@ -68,86 +66,82 @@ public class BlueFarAuto extends OpMode {
 
         scheduler.schedule(
                 new SequentialCommandGroup(
-                        new FraudWaitCommand(1100),
-                        new IntakeCommand(intake, Intake.flapUp, 1),
+                        new FraudWaitCommand(3000),
+                        new IntakeCommand(intake, Intake.transferPosition, 1),
                         new FraudInstantCommand(()->
-                                intake.setTransfer(true)
+                                intake.setTransferSlower(true)
                         ),
-                        new WaitCommand(700),
+                        new WaitCommand(800),
                         new FraudInstantCommand(()->{
-                                intake.setTransfer(false);
-                                intake.setFlap(Intake.flapDown);
-                                turret.setOffset(-1.5);
+                                intake.setTransferSlower(false);
+                                intake.setFlap(Intake.lockedPosition);
                             }
                         ),
                         new PedroFollowCommand(follower, Path1),
                         new PedroFollowCommand(follower, Path2),
-                        new WaitCommand(200),
-                        new IntakeCommand(intake, Intake.flapUp, 1),
+                        new WaitCommand(500),
+                        new IntakeCommand(intake, Intake.transferPosition, 1),
                         new FraudInstantCommand(()->
-                                intake.setTransfer(true)
+                                intake.setTransferSlower(true)
                         ),
-                        new WaitCommand(700),
+                        new WaitCommand(800),
                         new FraudInstantCommand(()->{
-                            intake.setTransfer(false);
-                            intake.setFlap(Intake.flapDown);
-                            turret.setOffset(-3.25);
+                            intake.setTransferSlower(false);
+                            intake.setFlap(Intake.lockedPosition);
                         }),
                         new PedroFollowCommand(follower, Path3),
                         new ParallelCommandGroup(
                                 new PedroFollowCommand(follower, Path4),
                                 new SequentialCommandGroup(
                                         new FraudWaitCommand(400),
-                                        new IntakeCommand(intake, Intake.flapDown, 0)
+                                        new IntakeCommand(intake, Intake.lockedPosition, 0)
                                 )
                         ),
-                        new WaitCommand(200),
-                        new IntakeCommand(intake, Intake.flapUp, 1),
+                        new WaitCommand(500),
+                        new IntakeCommand(intake, Intake.transferPosition, 1),
                         new FraudInstantCommand(()->
-                                intake.setTransfer(true)
+                                intake.setTransferSlower(true)
                         ),
-                        new WaitCommand(700),
+                        new WaitCommand(800),
                         new FraudInstantCommand(()->{
-                            intake.setTransfer(false);
-                            intake.setFlap(Intake.flapDown);
+                            intake.setTransferSlower(false);
+                            intake.setFlap(Intake.lockedPosition);
                         }),
-                        new FraudInstantCommand(()-> turret.setOffset(-1)),
-                        new FraudWaitCommand(1500),
+                        new WaitCommand(5000),
                         new PedroFollowCommand(follower, Path1),
-                        new IntakeCommand(intake, Intake.flapDown, 0),
+                        new IntakeCommand(intake, Intake.lockedPosition, 0),
                         new PedroFollowCommand(follower, Path2),
-                        new WaitCommand(200),
-                        new IntakeCommand(intake, Intake.flapUp, 1),
+                        new WaitCommand(500),
+                        new IntakeCommand(intake, Intake.transferPosition, 1),
                         new FraudInstantCommand(()->
-                                intake.setTransfer(true)
+                                intake.setTransferSlower(true)
                         ),
-                        new WaitCommand(700),
+                        new WaitCommand(800),
                         new FraudInstantCommand(()->{
-                            intake.setTransfer(false);
-                            intake.setFlap(Intake.flapDown);
+                            intake.setTransferSlower(false);
+                            intake.setFlap(Intake.lockedPosition);
                         }),
+
                         new PedroFollowCommand(follower, Path1),
-                        new IntakeCommand(intake, Intake.flapDown, 0),
-                        new WaitCommand(200),
+                        new IntakeCommand(intake, Intake.lockedPosition, 0),
+                        new WaitCommand(500),
                         new PedroFollowCommand(follower, Path2),
-                        new IntakeCommand(intake, Intake.flapUp, 1),
+                        new IntakeCommand(intake, Intake.transferPosition, 1),
                         new FraudInstantCommand(()->
-                                intake.setTransfer(true)
+                                intake.setTransferSlower(true)
                         ),
-                        new WaitCommand(700),
+                        new WaitCommand(800),
                         new FraudInstantCommand(()->{
-                            intake.setTransfer(false);
-                            intake.setFlap(Intake.flapDown);
+                            intake.setTransferSlower(false);
+                            intake.setFlap(Intake.lockedPosition);
                         }),
-                        new IntakeCommand(intake, Intake.flapDown, 0),
-                        new PedroFollowCommand(follower, Path1)
+                        new IntakeCommand(intake, Intake.lockedPosition, 0)
                 )
         );
 
         turret.setPose(new Pair<>(56.0, 8.0), 180);
         turret.update();
-        intake.setFlap(Intake.flapDown);
-        turret.setOffset(-1);
+        intake.setFlap(Intake.lockedPosition);
     }
 
     private Pose pose; private double meters;
@@ -157,14 +151,18 @@ public class BlueFarAuto extends OpMode {
         scheduler.run();
         follower.update();
         pose = follower.getPose();
+        turret.setOffset(-4);
 
         turret.setPose(new Pair<>(pose.getX(), pose.getY()), Math.toDegrees(pose.getHeading()));
 
-        meters = turret.distanceToGoal(pose.getX(), pose.getY()) * 0.0254;
-        shooter.setTargetRPM(shooter.getRPMForShot(meters)+1900);
-        shooter.setHoodAngle(shooter.getHoodAngle(meters));
+//        meters = turret.distanceToGoal(pose.getX(), pose.getY()) * 0.0254;
+//        shooter.updateFancyKinematics(meters, Math.toRadians(47));
 
-        shooter.runShooter();
+        shooter.setTargetRPM(4350);
+        shooter.setHoodAngle(46);
+
+
+        shooter.runShooterSus();
         turret.update();
 
         PurpleAutoLimelight.endpose = new Pose2D(DistanceUnit.INCH, pose.getX(), pose.getY(), AngleUnit.RADIANS, pose.getHeading());
@@ -174,7 +172,7 @@ public class BlueFarAuto extends OpMode {
     public void stop() {
         Pose pose = follower.getPose();
         PurpleAutoLimelight.endpose = new Pose2D(DistanceUnit.INCH, pose.getX(), pose.getY(), AngleUnit.RADIANS, pose.getHeading());
-        turret.setOffset(0);
+        turret.setOffset(-2);
     }
 
 
@@ -192,7 +190,7 @@ public class BlueFarAuto extends OpMode {
                             new BezierLine(
                                     new Pose(56.000, 8.000),
 
-                                    new Pose(7.5, 8.5)
+                                    new Pose(8, 9)
                             )
                     ).setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(180))
                     .setTranslationalConstraint(12)
@@ -202,7 +200,7 @@ public class BlueFarAuto extends OpMode {
 
             Path2 = follower.pathBuilder().addPath(
                             new BezierLine(
-                                    new Pose(10, 8.5),
+                                    new Pose(8, 9),
 
                                     new Pose(56.000, 8.5)
                             )

@@ -1,21 +1,15 @@
 package org.firstinspires.ftc.teamcode.opmodes;
 
 import static org.firstinspires.ftc.teamcode.tests.ShotAlgTest.c;
-import static org.firstinspires.ftc.teamcode.tests.ShotAlgTest.f;
 
 import android.util.Pair;
 
 import com.acmerobotics.dashboard.config.Config;
-import com.arcrobotics.ftclib.controller.PIDController;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
-import com.qualcomm.hardware.limelightvision.LLResult;
-import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.hardware.AnalogInput;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -24,7 +18,6 @@ import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
 import org.firstinspires.ftc.teamcode.systems.Drivebase;
 import org.firstinspires.ftc.teamcode.systems.Intake;
-import org.firstinspires.ftc.teamcode.systems.Localizer;
 import org.firstinspires.ftc.teamcode.systems.Shooter;
 import org.firstinspires.ftc.teamcode.systems.Turret;
 
@@ -33,7 +26,7 @@ import org.firstinspires.ftc.teamcode.systems.Turret;
 public class BlueTele extends OpMode {
 
     private Drivebase drivebase; private Intake intake; private Shooter shooter; private Turret turret;
-    public static double offset = 4;
+    public static double offset = 4, farOffset = -4.5, farTransferRate = 0.57, vcWeight = 0, farRPM = 4500, farHood = 45;
 
     GamepadEx controller;
 
@@ -42,9 +35,11 @@ public class BlueTele extends OpMode {
     private GoBildaPinpointDriver pinpoint;
     public static GoBildaPinpointDriver.EncoderDirection yDirection, xDirection;
 
-    public double xPos, yPos, meters;
+    public double xPos, yPos, meters, weight, driveMult = 1;
 
     Limelight3A limelight3A;
+
+    boolean haveWeNanned = false;
 
 
     @Override
@@ -70,10 +65,10 @@ public class BlueTele extends OpMode {
         limelight3A.start();
 
         shooter = new Shooter(hardwareMap, telemetry);
-        turret.setOffset(offset);
     }
 
-    double looptime = 0; boolean turretUpdateFlag = true;
+    double looptime = 0, hoodAngle = 0; boolean turretUpdateFlag = true;
+    double xVel = 0, yVel = 0;
     ElapsedTime looptimer = new ElapsedTime();
 
     @Override
@@ -95,7 +90,7 @@ public class BlueTele extends OpMode {
         } isAPressed = gamepad1.a;
 
         double heading = pinpoint.getHeading(AngleUnit.RADIANS); xPos = pinpoint.getPosX(DistanceUnit.INCH); yPos = pinpoint.getPosY(DistanceUnit.INCH);
-        drivebase.takeTeleInput(controller.getLeftY(), controller.getLeftX(), controller.getRightX());
+        drivebase.takeTeleInput(controller.getLeftY() * driveMult, controller.getLeftX() * driveMult, controller.getRightX() * driveMult);
 
         turret.setPose(new Pair<>(xPos, yPos), Math.toDegrees(heading));
 
@@ -108,35 +103,56 @@ public class BlueTele extends OpMode {
         } isDpadDownPressed = gamepad1.right_bumper || gamepad1.dpad_down;
 
         if (gamepad1.left_bumper) {
-            intake.setFlap(Intake.flapUp);
+            intake.setFlap(Intake.transferPosition);
             intake.setTransfer(true);
             intake.setActive(true);
+            driveMult = 0.4;
         } else {
-            intake.setFlap(Intake.flapDown);
+            intake.setFlap(Intake.lockedPosition);
             intake.setTransfer(false);
             intake.setActive(controller.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) > 0.5);
             intake.setReverse(controller.getTrigger(GamepadKeys.Trigger.LEFT_TRIGGER) > 0.5);
+            driveMult = 1;
         }
 
         if (shootingMode) {
             turret.setMode(Turret.Mode.odo);
             meters = turret.distanceToGoal(xPos, yPos) * 0.0254;
+
+            hoodAngle = shooter.getHoodAngle(meters);
+
+            shooter.updateFancyKinematics(meters, Math.toRadians(hoodAngle));
+
             if (close) {
-                shooter.setTargetRPM(shooter.getRPMForShot(meters) + c);
-                shooter.setHoodAngle(shooter.getHoodAngle(meters));
-                telemetry.addData("target rpm", shooter.getRPMForShot(meters) + c);
+                intake.setTransferPower(1);
+                intake.setIntakePower(1);
+
+                shooter.setTargetRPM(shooter.getKinematicRPMGoal()+c);
+
+                shooter.setHoodAngle(hoodAngle);
+                Shooter.w = 1.2;
+                telemetry.addData("target rpm", shooter.getKinematicRPMGoal() + c);
+                telemetry.addData("tof estimate", shooter.getTof());
+                turret.setOffset(2.1);
+                shooter.runShooterSus();
             } else {
-                shooter.setTargetRPM(shooter.getRPMForShot(meters) + f);
-                shooter.setHoodAngle(Math.min(shooter.getHoodAngle(meters), 47));
-                telemetry.addData("target rpm", shooter.getRPMForShot(meters) + f);
+                intake.setTransferPower(1);
+                intake.setIntakePower(1);
+                shooter.setTargetRPM(farRPM);
+                shooter.setHoodAngle(farHood);
+                turret.setOffset(farOffset);
+                telemetry.addData("target rpm", 4200);
+                shooter.runShooterSus();
             }
 
             telemetry.addData("meters", meters);
 
-            shooter.runShooter();
+
         } else {
             turret.setMode(Turret.Mode.fixed);
             turret.setTargetDegrees(0);
+            intake.setIntakePower(1);
+            turret.setOffset(2.1);
             shooter.stopShooter();
         }
 
@@ -159,9 +175,10 @@ public class BlueTele extends OpMode {
 
         intake.update();
         drivebase.update();
-        turret.setOffset(offset);
         turret.update();
-        telemetry.update();
+        if (!haveWeNanned) {
+            telemetry.update();
+        }
 
         looptime = looptimer.milliseconds();
     }

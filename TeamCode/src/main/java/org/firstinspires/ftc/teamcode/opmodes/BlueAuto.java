@@ -1,7 +1,5 @@
 package org.firstinspires.ftc.teamcode.opmodes;
 
-import static org.firstinspires.ftc.teamcode.tests.ShotAlgTest.c;
-
 import com.arcrobotics.ftclib.command.CommandScheduler;
 import com.arcrobotics.ftclib.command.ParallelCommandGroup;
 import com.arcrobotics.ftclib.command.SequentialCommandGroup;
@@ -11,9 +9,9 @@ import com.pedropathing.geometry.BezierCurve;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.PathChain;
-import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.DcMotor;
@@ -30,6 +28,7 @@ import org.firstinspires.ftc.teamcode.systems.Intake;
 import org.firstinspires.ftc.teamcode.systems.Shooter;
 
 @Autonomous
+@Disabled
 public class BlueAuto extends OpMode {
 
     Follower follower;
@@ -84,9 +83,9 @@ public class BlueAuto extends OpMode {
                             targetDeg = 87;
                         }),
                         new SequentialCommandGroup(
-                                new IntakeCommand(intake, Intake.flapUp, 1),
+                                new IntakeCommand(intake, Intake.transferPosition, 1),
                                 new WaitCommand(1000),
-                                new IntakeCommand(intake, Intake.flapDown, 1)
+                                new IntakeCommand(intake, Intake.lockedPosition, 1)
                         ),
                         new ParallelCommandGroup(
                                 new FraudInstantCommand(()->{
@@ -95,7 +94,7 @@ public class BlueAuto extends OpMode {
                                 new PedroFollowCommand(follower, Path1)
                         ),
                         new WaitCommand(200),
-                        new IntakeCommand(intake, Intake.flapDown, 1),
+                        new IntakeCommand(intake, Intake.lockedPosition, 1),
                         new ParallelCommandGroup(
                                 new PedroFollowCommand(follower, Path2),
                                 new FraudInstantCommand(()->{
@@ -103,11 +102,11 @@ public class BlueAuto extends OpMode {
                                     shooter.setHoodAngle(45);
                                 })
                         ),
-                        new IntakeCommand(intake, Intake.flapUp, 1),
+                        new IntakeCommand(intake, Intake.transferPosition, 1),
                         new WaitCommand(900),
                         new ParallelCommandGroup(
                                 new PedroFollowCommand(follower, Path3),
-                                new IntakeCommand(intake, Intake.flapDown, 1)
+                                new IntakeCommand(intake, Intake.lockedPosition, 1)
                         ),
                         new WaitCommand(200),
                         new ParallelCommandGroup(
@@ -119,14 +118,14 @@ public class BlueAuto extends OpMode {
                                 }),
                                 new SequentialCommandGroup(
                                         new WaitCommand(100),
-                                        new IntakeCommand(intake, Intake.flapDown, 1)
+                                        new IntakeCommand(intake, Intake.lockedPosition, 1)
                                 )
                         ),
-                        new IntakeCommand(intake, Intake.flapUp, 1),
+                        new IntakeCommand(intake, Intake.transferPosition, 1),
                         new WaitCommand(900),
                         new ParallelCommandGroup(
                                 new PedroFollowCommand(follower, Path5),
-                                new IntakeCommand(intake, Intake.flapDown, 1)
+                                new IntakeCommand(intake, Intake.lockedPosition, 1)
                         ),
                         new WaitCommand(1300),
                         new FraudInstantCommand(()->{
@@ -134,12 +133,12 @@ public class BlueAuto extends OpMode {
                             shooter.setTargetRPM(4400);
                         }),
                         new PedroFollowCommand(follower, Path6),
-                        new IntakeCommand(intake, Intake.flapUp, 1),
+                        new IntakeCommand(intake, Intake.transferPosition, 1),
                         new WaitCommand(800),
                         new ParallelCommandGroup(
                                 new PedroFollowCommand(follower, Path7),
 
-                                new IntakeCommand(intake, Intake.flapDown, 1)
+                                new IntakeCommand(intake, Intake.lockedPosition, 1)
                         ),
                         new FraudInstantCommand(()->{
                             shooter.setTargetRPM(4400);
@@ -147,11 +146,11 @@ public class BlueAuto extends OpMode {
                             targetDeg = 95.5;
                         }),
                         new PedroFollowCommand(follower, Path8),
-                        new IntakeCommand(intake, Intake.flapUp, 1),
+                        new IntakeCommand(intake, Intake.transferPosition, 1),
                         new WaitCommand(800),
                         new PedroFollowCommand(follower, Path9),
                         new StopShooter(shooter),
-                        new IntakeCommand(intake, Intake.flapDown, 0)
+                        new IntakeCommand(intake, Intake.lockedPosition, 0)
 
 //                        new ParallelCommandGroup(
 //                                new ManualShooterInputCommand(shooter, 4800, 1.3, 55),
@@ -179,7 +178,7 @@ public class BlueAuto extends OpMode {
                 )
         );
 
-        intake.setFlap(Intake.flapDown);
+        intake.setFlap(Intake.lockedPosition);
 
     }
 

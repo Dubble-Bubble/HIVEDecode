@@ -5,19 +5,20 @@ import com.qualcomm.hardware.sparkfun.SparkFunOTOS;
 
 import org.firstinspires.ftc.teamcode.systems.squid.SquIDFollower;
 
-public class SquiDCommand extends CommandBase {
+public class SquiDCommandTimeout extends CommandBase {
 
     private SquIDFollower follower;
     private SparkFunOTOS.Pose2D pose2D;
     private boolean firstRun = false;
 
-    public double ptol, htol;
+    public double ptol, htol, timeout;
 
-    public SquiDCommand(SquIDFollower follower, double posTolerance, double headingTolerance, SparkFunOTOS.Pose2D pose2D) {
+    public SquiDCommandTimeout(SquIDFollower follower, double posTolerance, double headingTolerance, SparkFunOTOS.Pose2D pose2D, double timeout) {
         this.follower = follower;
         this.pose2D = pose2D;
         this.ptol = posTolerance;
         this.htol = headingTolerance;
+        this.timeout = timeout;
     }
 
     @Override
@@ -25,7 +26,7 @@ public class SquiDCommand extends CommandBase {
         follower.setTargetPose(pose2D);
         SquIDFollower.translationalTolerance = ptol;
         SquIDFollower.headingTolerance = htol;
-        SquIDFollower.timeout = 1;
+        SquIDFollower.timeout = timeout;
     }
 
     public boolean isFirstRun = true;

@@ -1,7 +1,5 @@
 package org.firstinspires.ftc.teamcode.tests;
 
-import static org.firstinspires.ftc.teamcode.tests.ShotAlgTest.c;
-
 import android.util.Pair;
 
 import com.arcrobotics.ftclib.command.CommandScheduler;
@@ -12,15 +10,10 @@ import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierCurve;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
-import com.pedropathing.paths.Path;
 import com.pedropathing.paths.PathChain;
-import com.qualcomm.hardware.limelightvision.LLResult;
-import com.qualcomm.hardware.limelightvision.LLResultTypes;
-import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.hardware.AnalogInput;
-import com.qualcomm.robotcore.hardware.DcMotor;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
@@ -35,6 +28,7 @@ import org.firstinspires.ftc.teamcode.systems.Shooter;
 import org.firstinspires.ftc.teamcode.systems.Turret;
 
 @Autonomous
+@Disabled
 public class AmeyAutoBlue extends OpMode {
 
     Follower follower; Intake intake; Shooter shooter;
@@ -68,11 +62,11 @@ public class AmeyAutoBlue extends OpMode {
         scheduler.schedule(
                 new SequentialCommandGroup(
                         new FraudInstantCommand(()->{
-                            intake.setFlap(Intake.flapUp);
+                            intake.setFlap(Intake.transferPosition);
                         }),
                         new FraudInstantCommand(()->turret.update()),
                         new ParallelCommandGroup(
-                                new IntakeCommand(intake, Intake.flapUp, 1),
+                                new IntakeCommand(intake, Intake.transferPosition, 1),
                                 new PedroFollowCommand(follower, Path1)
                         ),
                         new FraudInstantCommand(()->turret.update()),
@@ -83,7 +77,7 @@ public class AmeyAutoBlue extends OpMode {
                         }),
                         new WaitCommand(650),
                         new ParallelCommandGroup(
-                                new IntakeCommand(intake, Intake.flapDown, 1),
+                                new IntakeCommand(intake, Intake.lockedPosition, 1),
                                 new FraudInstantCommand(()->{
                                     intake.setTransfer(false);
                                 })
@@ -92,7 +86,7 @@ public class AmeyAutoBlue extends OpMode {
                         new FraudInstantCommand(()->turret.update()),
                         new WaitCommand(600),
                         new FraudInstantCommand(()->{
-                            intake.setFlap(Intake.flapUp);
+                            intake.setFlap(Intake.transferPosition);
                         }),
                         new PedroFollowCommand(follower, Path3),
                         new FraudInstantCommand(()->turret.update()),
@@ -102,7 +96,7 @@ public class AmeyAutoBlue extends OpMode {
                         }),
                         new WaitCommand(760),
                         new ParallelCommandGroup(
-                                new IntakeCommand(intake, Intake.flapDown, 1),
+                                new IntakeCommand(intake, Intake.lockedPosition, 1),
                                 new FraudInstantCommand(()->{
                                     intake.setTransfer(false);
                                 })
@@ -112,7 +106,7 @@ public class AmeyAutoBlue extends OpMode {
                         new FraudInstantCommand(()->turret.update()),
                         new WaitCommand(600),
                         new FraudInstantCommand(()->{
-                            intake.setFlap(Intake.flapUp);
+                            intake.setFlap(Intake.transferPosition);
                         }),
                         new PedroFollowCommand(follower, Path5),
                         new FraudInstantCommand(()->turret.update()),
@@ -122,7 +116,7 @@ public class AmeyAutoBlue extends OpMode {
                         }),
                         new WaitCommand(760),
                         new ParallelCommandGroup(
-                                new IntakeCommand(intake, Intake.flapDown, 1),
+                                new IntakeCommand(intake, Intake.lockedPosition, 1),
                                 new FraudInstantCommand(()->{
                                     intake.setTransfer(false);
                                 })
@@ -131,7 +125,7 @@ public class AmeyAutoBlue extends OpMode {
                         new FraudInstantCommand(()->turret.update()),
                         new WaitCommand(600),
                         new PedroFollowCommand(follower, Path7),
-                        new IntakeCommand(intake, Intake.flapDown, 1),
+                        new IntakeCommand(intake, Intake.lockedPosition, 1),
                         new PedroFollowCommand(follower, Path8),
                         new FraudInstantCommand(()->turret.update()),
                         new WaitCommand(300),
@@ -140,7 +134,7 @@ public class AmeyAutoBlue extends OpMode {
                         }),
                         new WaitCommand(760),
                         new ParallelCommandGroup(
-                                new IntakeCommand(intake, Intake.flapDown, 1),
+                                new IntakeCommand(intake, Intake.lockedPosition, 1),
                                 new FraudInstantCommand(()->{
                                     intake.setTransfer(false);
                                 })

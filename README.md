@@ -1580,7 +1580,7 @@ Changes include:
     - If a disconnected module gets physically reconnected the RC will auto detect the module and the user will regain control of the recently connected module.
     - Warning messages are more helpful (identifies the type of module that’s missing plus its USB serial number).
  * Code changes to fix the null gamepad reference when users try to reference the gamepads in the init() portion of their OpMode.
- * NXT light sensor output is now properly scaled.  Note that teams might have to readjust their light threshold values in their OpModes.
+ * NXT light sensor purePursuitOutput is now properly scaled.  Note that teams might have to readjust their light threshold values in their OpModes.
  * On DS user interface, gamepad icon for a driver will disappear if the matching gamepad is disconnected or if that gamepad gets designated as a different driver.
  * Robot Protocol (ROBOCOL) version number info is displayed in About screen on RC and DS apps.
  * Incorporated a display filter on pairing screen to filter out devices that don’t use the “<TEAM NUMBER>-“ format. This filter can be turned off to show all Wi-Fi Direct devices.
@@ -1600,7 +1600,7 @@ Changes include:
  * LED.getDeviceName and .getConnectionInfo() return null
  * apps check for ROBOCOL_VERSION mismatch
  * Fix for Telemetry also has off-by-one errors in its data string sizing / short size limitations error
- * User telemetry output is sorted.
+ * User telemetry purePursuitOutput is sorted.
  * added formatting variants to DbgLog and RobotLog APIs
  * code modified to allow for a long list of OpMode names.
  * changes to improve thread safety of RobocolDatagramSocket

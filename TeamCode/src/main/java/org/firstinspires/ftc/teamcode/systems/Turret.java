@@ -68,7 +68,7 @@ public class Turret {
 
     ElapsedTime runtime = new ElapsedTime();
 
-    private double offset = 0;
+    private double offset = 1;
 
     public void setOffset(double offset) {
         this.offset = offset;
@@ -94,9 +94,6 @@ public class Turret {
                 break;
             case fixed:
                 break;
-            case limelight:
-                error = 0-(ll3a.getLatestResult().getTx());
-                break;
         }
 
 
@@ -105,6 +102,10 @@ public class Turret {
 
     public double getTargetAngle() {
         return targetDeg;
+    }
+
+    public double getOdoTarget() {
+        return odoTarget;
     }
 
     public double getError() {
@@ -119,17 +120,15 @@ public class Turret {
         return Math.toDegrees(odoTarget);
     }
 
-    public void limelightReset() {
-
-    }
-
     private double pos = 0;
 
     private void setAngle(double angle) {
         pos = interpolateAngle(angle);
-        s1.setPosition(pos);
-        s2.setPosition(pos);
-        s3.setPosition(pos);
+        if (!Double.isNaN(pos)) {
+            s1.setPosition(pos);
+            s2.setPosition(pos);
+            s3.setPosition(pos);
+        }
     }
 
     private double interpolateAngle(double angle) {
@@ -144,10 +143,6 @@ public class Turret {
 
     }
 
-    private double analogVoltageToRadians(double voltage) {
-        return voltage * ((2*Math.PI)/3.3);
-    }
-
     private double analogVoltageToDegrees(double voltage) {
         return voltage * ((360)/3.3);
     }
@@ -159,13 +154,8 @@ public class Turret {
     public double distanceToGoal(double xPosition, double yPosition) {
         if (red) {
             return Math.hypot(((redGoal.first+xOffset)-xPosition), ((redGoal.second+yOffset)-yPosition));
-
         } else {
             return Math.hypot(((blueGoal.first+xOffset)-xPosition), ((blueGoal.second+yOffset)-yPosition));
         }
-    }
-
-    public double getFitP(double error) {
-        return  Math.max(0.556 + (-0.086*Math.log(error)), 0.03);
     }
 }

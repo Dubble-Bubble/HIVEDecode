@@ -9,20 +9,17 @@ import com.pedropathing.follower.Follower;
 import com.pedropathing.geometry.BezierCurve;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
-import com.pedropathing.paths.Path;
 import com.pedropathing.paths.PathChain;
 import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.hardware.AnalogInput;
 import com.qualcomm.robotcore.hardware.DcMotor;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
-import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
-import org.firstinspires.ftc.teamcode.opmodes.RedAutoLimelight;
 import org.firstinspires.ftc.teamcode.opmodes.commands.FraudInstantCommand;
 import org.firstinspires.ftc.teamcode.opmodes.commands.IntakeCommand;
 import org.firstinspires.ftc.teamcode.opmodes.commands.PedroFollowCommand;
@@ -31,6 +28,7 @@ import org.firstinspires.ftc.teamcode.systems.Intake;
 import org.firstinspires.ftc.teamcode.systems.Shooter;
 
 @Autonomous
+@Disabled
 public class AmeyAutoRed extends OpMode {
 
     Follower follower; Intake intake; Shooter shooter;
@@ -83,14 +81,14 @@ public class AmeyAutoRed extends OpMode {
                 new SequentialCommandGroup(
                         new FraudInstantCommand(()->{
                             targetDeg = -50;
-                            intake.setFlap(Intake.flapDown);
+                            intake.setFlap(Intake.lockedPosition);
                             shooter.setTargetRPM(2700);
                             intake.setPtoEngaged(true);
                         }),
                         new PedroFollowCommand(follower, Path1),
-                        new IntakeCommand(intake, Intake.flapUp, 1),
+                        new IntakeCommand(intake, Intake.transferPosition, 1),
                         new WaitCommand(1200),
-                        new IntakeCommand(intake, Intake.flapDown, 1),
+                        new IntakeCommand(intake, Intake.lockedPosition, 1),
                         new FraudInstantCommand(
                                 ()->intake.setPtoEngaged(false)
                         ),
@@ -99,9 +97,9 @@ public class AmeyAutoRed extends OpMode {
                         new FraudInstantCommand(
                                 ()->intake.setPtoEngaged(true)
                         ),
-                        new IntakeCommand(intake, Intake.flapUp, 1),
+                        new IntakeCommand(intake, Intake.transferPosition, 1),
                         new WaitCommand(1200),
-                        new IntakeCommand(intake, Intake.flapDown, 1),
+                        new IntakeCommand(intake, Intake.lockedPosition, 1),
                         new FraudInstantCommand(
                                 ()->intake.setPtoEngaged(false)
                         ),
@@ -111,9 +109,9 @@ public class AmeyAutoRed extends OpMode {
                         new FraudInstantCommand(
                                 ()->intake.setPtoEngaged(true)
                         ),
-                        new IntakeCommand(intake, Intake.flapUp, 1),
+                        new IntakeCommand(intake, Intake.transferPosition, 1),
                         new WaitCommand(1200),
-                        new IntakeCommand(intake, Intake.flapDown, 1),
+                        new IntakeCommand(intake, Intake.lockedPosition, 1),
                         new FraudInstantCommand(()->{
                             targetDeg = -135;
                             intake.setPtoEngaged(false);
@@ -123,10 +121,10 @@ public class AmeyAutoRed extends OpMode {
                         new FraudInstantCommand(
                                 ()->intake.setPtoEngaged(true)
                         ),
-                        new IntakeCommand(intake, Intake.flapUp, 1),
+                        new IntakeCommand(intake, Intake.transferPosition, 1),
                         new WaitCommand(1200),
-                        new IntakeCommand(intake, Intake.flapDown, 1),
-                        new IntakeCommand(intake, Intake.flapDown, 0),
+                        new IntakeCommand(intake, Intake.lockedPosition, 1),
+                        new IntakeCommand(intake, Intake.lockedPosition, 0),
                         new PedroFollowCommand(follower, Path9),
                         new WaitCommand(3000),
                         new PedroFollowCommand(follower, Path10)

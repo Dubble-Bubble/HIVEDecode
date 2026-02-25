@@ -1,8 +1,5 @@
 package org.firstinspires.ftc.teamcode.opmodes;
 
-import static org.firstinspires.ftc.teamcode.tests.ShotAlgTest.c;
-import static org.firstinspires.ftc.teamcode.tests.ShotAlgTest.f;
-
 import android.util.Pair;
 
 import com.acmerobotics.dashboard.FtcDashboard;
@@ -16,14 +13,10 @@ import com.pedropathing.geometry.BezierCurve;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.PathChain;
-import com.qualcomm.hardware.limelightvision.LLResult;
-import com.qualcomm.hardware.limelightvision.LLResultTypes;
-import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.hardware.AnalogInput;
-import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -32,14 +25,13 @@ import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.teamcode.opmodes.commands.FraudInstantCommand;
 import org.firstinspires.ftc.teamcode.opmodes.commands.IntakeCommand;
 import org.firstinspires.ftc.teamcode.opmodes.commands.PedroFollowCommand;
-import org.firstinspires.ftc.teamcode.opmodes.commands.StopShooter;
 import org.firstinspires.ftc.teamcode.pedropathing.Constants;
 import org.firstinspires.ftc.teamcode.systems.Intake;
 import org.firstinspires.ftc.teamcode.systems.Shooter;
 import org.firstinspires.ftc.teamcode.systems.Turret;
-import org.firstinspires.ftc.teamcode.tests.ShotAlgTest;
 
 @Autonomous
+@Disabled
 public class BlueAutoLimelight extends OpMode {
 
     Follower follower; Turret turret;
@@ -86,7 +78,7 @@ public class BlueAutoLimelight extends OpMode {
         scheduler.schedule(
                 new SequentialCommandGroup(
                         new FraudInstantCommand(()->{
-                            intake.setFlap(Intake.flapUp);
+                            intake.setFlap(Intake.transferPosition);
                             intake.setActive(true);
                         }),
                         new PedroFollowCommand(follower, Path1),
@@ -95,7 +87,7 @@ public class BlueAutoLimelight extends OpMode {
                         }),
                         new WaitCommand(650),
                         new ParallelCommandGroup(
-                                new IntakeCommand(intake, Intake.flapDown, 1),
+                                new IntakeCommand(intake, Intake.lockedPosition, 1),
                                 new FraudInstantCommand(()->{
                                     intake.setTransfer(false);
                                 })
@@ -103,25 +95,25 @@ public class BlueAutoLimelight extends OpMode {
                         new ParallelCommandGroup(
                                 //new PedroFollowCommand(follower, Gurt)
                         ),
-                        new IntakeCommand(intake, Intake.flapUp, 1),
+                        new IntakeCommand(intake, Intake.transferPosition, 1),
                         new PedroFollowCommand(follower, Path2),
                         new FraudInstantCommand(()->{
                             intake.setTransfer(true);
                         }),
                         new WaitCommand(750),
                         new ParallelCommandGroup(
-                                new IntakeCommand(intake, Intake.flapDown, 1),
+                                new IntakeCommand(intake, Intake.lockedPosition, 1),
                                 new FraudInstantCommand(()->{
                                     intake.setTransfer(false);
                                 })
                         ),
                         new ParallelCommandGroup(
                                 new PedroFollowCommand(follower, Path3),
-                                new IntakeCommand(intake, Intake.flapDown, 1)
+                                new IntakeCommand(intake, Intake.lockedPosition, 1)
                         ),
                         new ParallelCommandGroup(
                                 new PedroFollowCommand(follower, Path4),
-                                new IntakeCommand(intake, Intake.flapUp, 1)
+                                new IntakeCommand(intake, Intake.transferPosition, 1)
 
                         ),
                         new FraudInstantCommand(()->{
@@ -129,7 +121,7 @@ public class BlueAutoLimelight extends OpMode {
                         }),
                         new WaitCommand(750),
                         new ParallelCommandGroup(
-                                new IntakeCommand(intake, Intake.flapDown, 1),
+                                new IntakeCommand(intake, Intake.lockedPosition, 1),
                                 new FraudInstantCommand(()->{
                                     intake.setTransfer(false);
                                 })
@@ -139,20 +131,20 @@ public class BlueAutoLimelight extends OpMode {
                                         new PedroFollowCommand(follower, Path5),
                                         new PedroFollowCommand(follower, paths.InterPath)
                                 ),
-                                new IntakeCommand(intake, Intake.flapDown, 1)
+                                new IntakeCommand(intake, Intake.lockedPosition, 1)
                         ),
                         new WaitCommand(1200),
-                        new IntakeCommand(intake, Intake.flapDown, 1),
+                        new IntakeCommand(intake, Intake.lockedPosition, 1),
                         new PedroFollowCommand(follower, Path6),
                         new ParallelCommandGroup(
-                                new IntakeCommand(intake, Intake.flapUp, 1),
+                                new IntakeCommand(intake, Intake.transferPosition, 1),
                                 new FraudInstantCommand(()->{
                                     intake.setTransfer(true);
                                 })
                                 ),
                         new WaitCommand(750),
                         new ParallelCommandGroup(
-                                new IntakeCommand(intake, Intake.flapDown, 1),
+                                new IntakeCommand(intake, Intake.lockedPosition, 1),
                                 new FraudInstantCommand(()->{
                                     intake.setTransfer(false);
                                 })
@@ -166,13 +158,13 @@ public class BlueAutoLimelight extends OpMode {
                         }),
                         new WaitCommand(750),
                         new ParallelCommandGroup(
-                                new IntakeCommand(intake, Intake.flapDown, 1),
+                                new IntakeCommand(intake, Intake.lockedPosition, 1),
                                 new FraudInstantCommand(()->{
                                     intake.setTransfer(false);
                                 })
                         ),
                         new PedroFollowCommand(follower, Path9),
-                        new IntakeCommand(intake, Intake.flapDown, 0)
+                        new IntakeCommand(intake, Intake.lockedPosition, 0)
 
 //                        new ParallelCommandGroup(
 //                                new ManualShooterInputCommand(shooter, 4800, 1.3, 55),
@@ -200,7 +192,7 @@ public class BlueAutoLimelight extends OpMode {
                 )
         );
 
-        intake.setFlap(Intake.flapDown);
+        intake.setFlap(Intake.lockedPosition);
 
     }
 

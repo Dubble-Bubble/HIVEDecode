@@ -18,7 +18,7 @@ public class Intake {
     private boolean intakeActivityFlag = false;
     private boolean reverseFlag = false;
 
-    public static double flapUp = 0.77, flapDown = 0.93, ptoEngaged = 0.15, ptoDisengaged = 0;
+    public static double transferPosition = 0.65, lockedPosition = 0.5, ptoEngaged = 0.15, ptoDisengaged = 0;
 
     public Intake(HardwareMap hardwareMap) {
         intake = hardwareMap.dcMotor.get("intake");
@@ -36,16 +36,26 @@ public class Intake {
         reverseFlag = flag;
     }
 
+    private double transferPower = 1, intakePower = 1;
+
+    public void setTransferPower(double power) {
+        transferPower = power;
+    }
+
+    public void setIntakePower(double power) {
+        intakePower = power;
+    }
+
     public void setTransfer(boolean transfer) {
         if (transfer) {
-            this.transfer.setPower(-0.9);
+            this.transfer.setPower(-transferPower);
         } else {
             this.transfer.setPower(0);
         }
     }
     public void setTransferSlower(boolean transfer) {
         if (transfer) {
-            this.transfer.setPower(-1);
+            this.transfer.setPower(-0.8);
         } else {
             this.transfer.setPower(0);
         }
@@ -58,12 +68,12 @@ public class Intake {
 
     public void update() {
         if (intakeActivityFlag) {
-            intake.setPower(1);
+            intake.setPower(intakePower);
         } else if (!reverseFlag && !intakeActivityFlag) {
             intake.setPower(0);
         } else if (reverseFlag && !intakeActivityFlag){
-            intake.setPower(-1);
-            transfer.setPower(1);
+            intake.setPower(-intakePower);
+            transfer.setPower(intakePower);
         }
     }
 

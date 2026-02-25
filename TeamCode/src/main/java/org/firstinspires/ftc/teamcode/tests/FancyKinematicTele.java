@@ -1,6 +1,7 @@
 package org.firstinspires.ftc.teamcode.tests;
 
 import static org.firstinspires.ftc.teamcode.tests.ShotAlgTest.c;
+import static org.firstinspires.ftc.teamcode.tests.ShotAlgTest.f;
 
 import android.util.Pair;
 
@@ -11,7 +12,6 @@ import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -24,12 +24,13 @@ import org.firstinspires.ftc.teamcode.systems.Intake;
 import org.firstinspires.ftc.teamcode.systems.Shooter;
 import org.firstinspires.ftc.teamcode.systems.Turret;
 
+@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "FancyKine")
 @Config
-@TeleOp
 @Disabled
-public class SWM2 extends OpMode {
+public class FancyKinematicTele extends OpMode {
+
     private Drivebase drivebase; private Intake intake; private Shooter shooter; private Turret turret;
-    public static double offset = 4, weight = 0.8;
+    public static double offset = 4, farOffset = -1, farTransferRate = 0.7;
 
     GamepadEx controller;
 
@@ -38,7 +39,7 @@ public class SWM2 extends OpMode {
     private GoBildaPinpointDriver pinpoint;
     public static GoBildaPinpointDriver.EncoderDirection yDirection, xDirection;
 
-    public double xPos, yPos, meters, xVel, yVel;
+    public double xPos, yPos, meters;
 
     Limelight3A limelight3A;
 
@@ -59,7 +60,7 @@ public class SWM2 extends OpMode {
 
         pinpoint.setPosition(PurpleAutoLimelight.endpose);
 
-        turret = new Turret(hardwareMap, true);
+        turret = new Turret(hardwareMap, false);
 
         limelight3A = hardwareMap.get(Limelight3A.class, "ll3a");
         limelight3A.setPollRateHz(250);
@@ -69,13 +70,12 @@ public class SWM2 extends OpMode {
         turret.setOffset(offset);
     }
 
-    double looptime = 0; double vComp = 0;
-    public double hoodAngle = 0;
+    double looptime = 0, hoodAngle = 0; boolean turretUpdateFlag = true;
     ElapsedTime looptimer = new ElapsedTime();
-    double heading = 0;
 
     @Override
     public void loop() {
+
         looptimer.reset();
 
         telemetry.addData("loop time (ms)", looptime);
@@ -91,11 +91,9 @@ public class SWM2 extends OpMode {
             pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, 144-8.795, 8, AngleUnit.RADIANS, 0));
         } isAPressed = gamepad1.a;
 
-        heading = pinpoint.getHeading(AngleUnit.RADIANS); xPos = pinpoint.getPosX(DistanceUnit.INCH); yPos = pinpoint.getPosY(DistanceUnit.INCH);
-        xVel = pinpoint.getVelX(DistanceUnit.INCH); yVel = pinpoint.getVelY(DistanceUnit.INCH);
+        double heading = pinpoint.getHeading(AngleUnit.RADIANS); xPos = pinpoint.getPosX(DistanceUnit.INCH); yPos = pinpoint.getPosY(DistanceUnit.INCH);
         drivebase.takeTeleInput(controller.getLeftY(), controller.getLeftX(), controller.getRightX());
 
-        turret.setAimPointOffset((-xVel*weight), (-yVel*weight));
         turret.setPose(new Pair<>(xPos, yPos), Math.toDegrees(heading));
 
         if (gamepad1.right_bumper && !isDpadDownPressed) {
@@ -119,38 +117,34 @@ public class SWM2 extends OpMode {
 
         if (shootingMode) {
             turret.setMode(Turret.Mode.odo);
-
             meters = turret.distanceToGoal(xPos, yPos) * 0.0254;
 
-
-            shooter.updateFancyKinematics(meters, Math.toRadians(shooter.getHoodAngle(meters)));
-
-            weight = shooter.getTof() +0.3;
-
-            meters = turret.distanceToGoal(xPos+(-xVel*weight), yPos+(-yVel*weight)) * 0.0254;
-            vComp = shotVelocityOffset(xVel, yVel);
-
-            hoodAngle =  (shooter.getHoodAngle(meters));
+            hoodAngle = shooter.getHoodAngle(meters);
 
             shooter.setHoodAngle(hoodAngle);
 
             shooter.updateFancyKinematics(meters, Math.toRadians(hoodAngle));
 
-            telemetry.addData("vComp", vComp);
-
             if (close) {
                 turret.setOffset(offset);
+                shooter.setTargetRPM(shooter.getKinematicRPMGoal()+c);
                 intake.setTransferPower(1);
-                shooter.setTargetRPM(shooter.getKinematicRPMGoal()+c+(vComp*1.3));
 
                 telemetry.addData("target rpm", shooter.getKinematicRPMGoal() + c);
                 telemetry.addData("tof estimate", shooter.getTof());
+            } else {
+                turret.setOffset(farOffset);
+                intake.setTransferPower(farTransferRate);
+                shooter.setTargetRPM(shooter.getKinematicRPMGoal() + f);
+                shooter.setHoodAngle(Math.min(shooter.getHoodAngle(meters), 45));
+                telemetry.addData("target rpm", shooter.getRPMForShot(meters) + f);
             }
 
             telemetry.addData("meters", meters);
 
-            shooter.runShooter();
+            shooter.runShooterSus();
         } else {
+            turret.setOffset(offset);
             turret.setMode(Turret.Mode.fixed);
             turret.setTargetDegrees(0);
             shooter.stopShooter();
@@ -158,6 +152,8 @@ public class SWM2 extends OpMode {
 
         telemetry.addData("is shootingModeOn", shootingMode);
         telemetry.addData("is close", close);
+        telemetry.addData("pose x", xPos);
+        telemetry.addData("pose y", yPos);
         telemetry.addData("heading", Math.toDegrees(heading));
 
 
@@ -173,17 +169,9 @@ public class SWM2 extends OpMode {
 
         intake.update();
         drivebase.update();
-        turret.setOffset(offset);
         turret.update();
         telemetry.update();
 
         looptime = looptimer.milliseconds();
-    }
-
-    private double velVectorMagnitude = 0;
-
-    private double shotVelocityOffset(double x, double y) {
-        velVectorMagnitude = Math.sqrt(Math.pow(Math.max(x, 0), 2) + Math.pow(Math.min(y, 0), 2)) * 0.0254;
-        return ((velVectorMagnitude * 1000) / (72 * Math.PI)) * 60;
     }
 }

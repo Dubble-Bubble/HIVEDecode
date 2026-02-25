@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.systems.squid;
+package org.firstinspires.ftc.teamcode.systems.pureP;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.pedropathing.geometry.Pose;
@@ -8,20 +8,21 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.teamcode.systems.squid.SquIDController;
 import org.firstinspires.ftc.teamcode.systems.squid.SquIDDrive;
 
 @Config
-public class SquIDFollower {
+public class PurePursuitSquidFollower {
 
     private SquIDController xC, yC, hC, fxC, fyC, fhC;
     public static double xp = 0.2, yp = -0.3, hp = 0.2, fxp = 0.05, fyp = -0.15, fhp = 0.4;
+    private PurePursuitSquidDrive drive; private GoBildaPinpointDriver localizer;
 
-    public static double fineTranslationalThresh = 10, fineHeadingThresh = 10, timeout = 1;
-    private SquIDDrive drive; private GoBildaPinpointDriver localizer;
+    PurePursuitPath path; PurePursuitPath.PurePursuitOutput purePursuitOutput;
 
-    public static double translationalTolerance = 2, headingTolerance = 2;
+    public static double translationalTolerance = 2, headingTolerance = 2, fineHeadingThresh = 15, timeout = 1;
 
-    public SquIDFollower(SquIDDrive drive, GoBildaPinpointDriver localizer) {
+    public PurePursuitSquidFollower(PurePursuitSquidDrive drive, GoBildaPinpointDriver localizer) {
         this.drive = drive;
         this.localizer = localizer;
         xC = new SquIDController(xp);
@@ -40,11 +41,17 @@ public class SquIDFollower {
         this.targetPose = targetPose;
     }
 
+    public void setCurrentPath(PurePursuitPath path) {
+        this.path = path;
+    }
+
     private double posX = 0, posY = 0, heading = 0;
 
     public void read() {
         localizer.update();
         currentPose = new Pose2D(localizer.getPosX(DistanceUnit.INCH), localizer.getPosY(DistanceUnit.INCH), localizer.getHeading(AngleUnit.RADIANS));
+        purePursuitOutput = path.update(currentPose.x, currentPose.y);
+        targetPose = new Pose2D(purePursuitOutput.targetX, purePursuitOutput.targetY, purePursuitOutput.targetHeading);
         error = subtract(targetPose, currentPose);
         error.set(new Pose2D(error.x, error.y, findHeadingError(currentPose.h, targetPose.h)));
     }
@@ -60,7 +67,7 @@ public class SquIDFollower {
         fyC.setP(fyp);
         fxC.setP(fxp);
 
-        if (totalTranslationError(error.x, error.y) <= fineTranslationalThresh) {
+        if (purePursuitOutput.atPathEnd) {
             x = fxC.calculate(currentPose.x, targetPose.x);
             y = fyC.calculate(currentPose.y, targetPose.y);
         } else {
@@ -82,10 +89,6 @@ public class SquIDFollower {
         } else if (isFinished() && timeoutCheck.seconds() > timeout) {
             drive.stop();
         }
-    }
-
-    public double totalTranslationError(double xE, double yE) {
-        return Math.sqrt(Math.pow(xE, 2) + Math.pow(yE, 2));
     }
 
     public double   findHeadingError(double cH, double tH) {

@@ -1,7 +1,5 @@
 package org.firstinspires.ftc.teamcode.opmodes;
 
-import static org.firstinspires.ftc.teamcode.tests.ShotAlgTest.c;
-
 import android.util.Pair;
 
 import com.acmerobotics.dashboard.FtcDashboard;
@@ -18,10 +16,10 @@ import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.PathChain;
 import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
-import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
@@ -39,6 +37,7 @@ import java.util.List;
 
 @Autonomous
 @Config
+@Disabled
 public class Blue18Ball extends OpMode {
 
     Follower follower;
@@ -84,10 +83,10 @@ public class Blue18Ball extends OpMode {
         scheduler.schedule(
                 new SequentialCommandGroup(
                         new FraudInstantCommand(()->{
-                            intake.setFlap(Intake.flapUp);
+                            intake.setFlap(Intake.transferPosition);
                             turret.setOffset(3);
                         }),
-                        new IntakeCommand(intake, Intake.flapUp, 1),
+                        new IntakeCommand(intake, Intake.transferPosition, 1),
                         new FraudInstantCommand(
                                 ()->turret.update()
                         ),
@@ -111,14 +110,14 @@ public class Blue18Ball extends OpMode {
                         ),
                         new ParallelCommandGroup(
                                 new PedroFollowCommand(follower, Gurt),
-                                new IntakeCommand(intake, Intake.flapDown, 1)
+                                new IntakeCommand(intake, Intake.lockedPosition, 1)
                         ),
                         new FraudInstantCommand(
                                 ()->turret.update()
                         ),
                         new ParallelCommandGroup(
                                 new PedroFollowCommand(follower, Path2),
-                                new IntakeCommand(intake, Intake.flapUp, 1)
+                                new IntakeCommand(intake, Intake.transferPosition, 1)
                         ),
                         new FraudInstantCommand(
                                 ()->turret.update()
@@ -135,7 +134,7 @@ public class Blue18Ball extends OpMode {
                         ),
                         new ParallelCommandGroup(
                                 new PedroFollowCommand(follower, Path3),
-                                new IntakeCommand(intake, Intake.flapDown, 1)
+                                new IntakeCommand(intake, Intake.lockedPosition, 1)
                         ),
                         new FraudInstantCommand(
                                 ()->turret.update()
@@ -148,7 +147,7 @@ public class Blue18Ball extends OpMode {
                         ),
                         new WaitCommand(500),
                         new FraudInstantCommand(()->{
-                            intake.setFlap(Intake.flapUp);
+                            intake.setFlap(Intake.transferPosition);
                             intake.setTransfer(true);
                         }),
                         new WaitCommand(700),
@@ -160,10 +159,10 @@ public class Blue18Ball extends OpMode {
                         new ParallelCommandGroup(
                                 new SequentialCommandGroup(
                                         new PedroFollowCommand(follower, Path5),
-                                        new IntakeCommand(intake, Intake.flapDown, 1),
+                                        new IntakeCommand(intake, Intake.lockedPosition, 1),
                                         new PedroFollowCommand(follower, paths.PathHalf)
                                 ),
-                                new IntakeCommand(intake, Intake.flapDown, 1)
+                                new IntakeCommand(intake, Intake.lockedPosition, 1)
                         ),
                         new FraudInstantCommand(
                                 ()->turret.update()
@@ -175,22 +174,22 @@ public class Blue18Ball extends OpMode {
                         new ParallelCommandGroup(
                                 new SequentialCommandGroup(
                                         new WaitCommand(1200),
-                                        new IntakeCommand(intake, Intake.flapDown, 0)
+                                        new IntakeCommand(intake, Intake.lockedPosition, 0)
                                         ),
                                 new PedroFollowCommand(follower, Path6)
                         ),
-                        new IntakeCommand(intake, Intake.flapDown, 1),
+                        new IntakeCommand(intake, Intake.lockedPosition, 1),
                         new FraudInstantCommand(
                                 ()->turret.update()
                         ),
                         new WaitCommand(500),
                         new FraudInstantCommand(()->{
-                            intake.setFlap(Intake.flapUp);
+                            intake.setFlap(Intake.transferPosition);
                             intake.setTransfer(true);
                         }),
                         new WaitCommand(700),
                         new ParallelCommandGroup(
-                                new IntakeCommand(intake, Intake.flapDown, 1),
+                                new IntakeCommand(intake, Intake.lockedPosition, 1),
                                 new FraudInstantCommand(()->{
                                     intake.setTransfer(false);
                                 })
@@ -200,7 +199,7 @@ public class Blue18Ball extends OpMode {
                                         new PedroFollowCommand(follower, Path5),
                                         new PedroFollowCommand(follower, paths.PathHalf)
                                 ),
-                                new IntakeCommand(intake, Intake.flapDown, 1)
+                                new IntakeCommand(intake, Intake.lockedPosition, 1)
                         ),
                         new FraudInstantCommand(
                                 ()->turret.update()
@@ -212,59 +211,59 @@ public class Blue18Ball extends OpMode {
                         new ParallelCommandGroup(
                                 new SequentialCommandGroup(
                                         new WaitCommand(1200),
-                                        new IntakeCommand(intake, Intake.flapDown, 0)
+                                        new IntakeCommand(intake, Intake.lockedPosition, 0)
                                 ),
                                 new PedroFollowCommand(follower, Path6)
                         ),
-                        new IntakeCommand(intake, Intake.flapDown, 1),
+                        new IntakeCommand(intake, Intake.lockedPosition, 1),
                         new FraudInstantCommand(
                                 ()->turret.update()
                         ),
                         new WaitCommand(500),
                         new FraudInstantCommand(()->{
-                            intake.setFlap(Intake.flapUp);
+                            intake.setFlap(Intake.transferPosition);
                             intake.setTransfer(true);
                         }),
                         new WaitCommand(700),
                         new ParallelCommandGroup(
-                                new IntakeCommand(intake, Intake.flapDown, 1),
+                                new IntakeCommand(intake, Intake.lockedPosition, 1),
                                 new FraudInstantCommand(()->{
                                     intake.setTransfer(false);
                                 })
                         ),
                         new ParallelCommandGroup(
                                 new PedroFollowCommand(follower, Path7),
-                                new IntakeCommand(intake, Intake.flapDown, 1)
+                                new IntakeCommand(intake, Intake.lockedPosition, 1)
                         ),
                         new FraudInstantCommand(
                                 ()->turret.update()
                         ),
-                        new IntakeCommand(intake, Intake.flapDown, 0),
+                        new IntakeCommand(intake, Intake.lockedPosition, 0),
                         new PedroFollowCommand(follower, Path8),
-                        new IntakeCommand(intake, Intake.flapDown, 1),
+                        new IntakeCommand(intake, Intake.lockedPosition, 1),
                         new FraudInstantCommand(
                                 ()->turret.update()
                         ),
                         new WaitCommand(500),
                         new FraudInstantCommand(()->{
-                            intake.setFlap(Intake.flapUp);
+                            intake.setFlap(Intake.transferPosition);
                             intake.setTransfer(true);
                         }),
                         new WaitCommand(700),
                         new ParallelCommandGroup(
-                                new IntakeCommand(intake, Intake.flapDown, 1),
+                                new IntakeCommand(intake, Intake.lockedPosition, 1),
                                 new FraudInstantCommand(()->{
                                     intake.setTransfer(false);
                                 })
                         ),
                         new PedroFollowCommand(follower, Path9),
                         new StopShooter(shooter),
-                        new IntakeCommand(intake, Intake.flapDown, 0)
+                        new IntakeCommand(intake, Intake.lockedPosition, 0)
                 )
         );
 
         turret.setPose(new Pair<>(32.0, 135.6), -90);
-        intake.setFlap(Intake.flapUp);
+        intake.setFlap(Intake.transferPosition);
 
         telemetry = new MultipleTelemetry(FtcDashboard.getInstance().getTelemetry(), telemetry);
 

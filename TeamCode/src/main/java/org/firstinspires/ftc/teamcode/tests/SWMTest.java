@@ -13,6 +13,7 @@ import com.qualcomm.hardware.limelightvision.LLResult;
 import com.qualcomm.hardware.limelightvision.LLResultTypes;
 import com.qualcomm.hardware.limelightvision.Limelight3A;
 import com.qualcomm.hardware.lynx.LynxModule;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.eventloop.opmode.TeleOp;
 import com.qualcomm.robotcore.hardware.AnalogInput;
@@ -27,6 +28,7 @@ import org.firstinspires.ftc.teamcode.systems.Turret;
 
 @TeleOp
 @Config
+@Disabled
 public class SWMTest extends OpMode {
 
     private GoBildaPinpointDriver pinpoint;

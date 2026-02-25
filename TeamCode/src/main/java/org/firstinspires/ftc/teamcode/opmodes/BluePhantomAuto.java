@@ -12,6 +12,7 @@ import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
+import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -28,6 +29,7 @@ import org.firstinspires.ftc.teamcode.systems.Shooter;
 import org.firstinspires.ftc.teamcode.systems.Turret;
 
 @Autonomous
+@Disabled
 public class BluePhantomAuto extends OpMode {
 
     Follower follower;
@@ -69,10 +71,10 @@ public class BluePhantomAuto extends OpMode {
         scheduler.schedule(
                 new SequentialCommandGroup(
                         new FraudInstantCommand(()->{
-                            intake.setFlap(Intake.flapUp);
+                            intake.setFlap(Intake.transferPosition);
                             turret.setOffset(-1);
                         }),
-                        new IntakeCommand(intake, Intake.flapUp, 1),
+                        new IntakeCommand(intake, Intake.transferPosition, 1),
                         new FraudInstantCommand(
                                 ()->turret.update()
                         ),
@@ -96,14 +98,14 @@ public class BluePhantomAuto extends OpMode {
                         ),
                         new ParallelCommandGroup(
                                 new PedroFollowCommand(follower, Gurt),
-                                new IntakeCommand(intake, Intake.flapDown, 1)
+                                new IntakeCommand(intake, Intake.lockedPosition, 1)
                         ),
                         new FraudInstantCommand(
                                 ()->turret.update()
                         ),
                         new ParallelCommandGroup(
                                 new PedroFollowCommand(follower, Path2),
-                                new IntakeCommand(intake, Intake.flapUp, 1)
+                                new IntakeCommand(intake, Intake.transferPosition, 1)
                         ),
                         new FraudInstantCommand(
                                 ()->turret.update()
@@ -120,7 +122,7 @@ public class BluePhantomAuto extends OpMode {
                         ),
                         new ParallelCommandGroup(
                                 new PedroFollowCommand(follower, Path3),
-                                new IntakeCommand(intake, Intake.flapDown, 1)
+                                new IntakeCommand(intake, Intake.lockedPosition, 1)
                         ),
                         new FraudInstantCommand(
                                 ()->turret.update()
@@ -133,7 +135,7 @@ public class BluePhantomAuto extends OpMode {
                         ),
                         new WaitCommand(300),
                         new FraudInstantCommand(()->{
-                            intake.setFlap(Intake.flapUp);
+                            intake.setFlap(Intake.transferPosition);
                             intake.setTransferSlower(true);
                         }),
                         new WaitCommand(1000),
@@ -146,10 +148,10 @@ public class BluePhantomAuto extends OpMode {
                                 new SequentialCommandGroup(
                                         new PedroFollowCommand(follower, Path5),
                                         new WaitCommand(100),
-                                        new IntakeCommand(intake, Intake.flapDown, 1),
+                                        new IntakeCommand(intake, Intake.lockedPosition, 1),
                                         new PedroFollowCommand(follower, paths.PathHalf)
                                 ),
-                                new IntakeCommand(intake, Intake.flapDown, 1)
+                                new IntakeCommand(intake, Intake.lockedPosition, 1)
                         ),
                         new FraudInstantCommand(
                                 ()->turret.update()
@@ -158,20 +160,20 @@ public class BluePhantomAuto extends OpMode {
 //                        new FraudInstantCommand(()->{
 //                            shooter.setTargetRPM(4300);
 //                        }),
-                        new IntakeCommand(intake, Intake.flapDown, 0),
+                        new IntakeCommand(intake, Intake.lockedPosition, 0),
                         new PedroFollowCommand(follower, Path6),
-                        new IntakeCommand(intake, Intake.flapDown, 1),
+                        new IntakeCommand(intake, Intake.lockedPosition, 1),
                         new FraudInstantCommand(
                                 ()->turret.update()
                         ),
                         new WaitCommand(300),
                         new FraudInstantCommand(()->{
-                            intake.setFlap(Intake.flapUp);
+                            intake.setFlap(Intake.transferPosition);
                             intake.setTransferSlower(true);
                         }),
                         new WaitCommand(1000),
                         new ParallelCommandGroup(
-                                new IntakeCommand(intake, Intake.flapDown, 1),
+                                new IntakeCommand(intake, Intake.lockedPosition, 1),
                                 new FraudInstantCommand(()->{
                                     intake.setTransferSlower(false);
                                 })
@@ -182,7 +184,7 @@ public class BluePhantomAuto extends OpMode {
                                         new WaitCommand(100),
                                         new PedroFollowCommand(follower, paths.PathHalf)
                                 ),
-                                new IntakeCommand(intake, Intake.flapDown, 1)
+                                new IntakeCommand(intake, Intake.lockedPosition, 1)
                         ),
                         new FraudInstantCommand(
                                 ()->turret.update()
@@ -191,32 +193,32 @@ public class BluePhantomAuto extends OpMode {
 //                        new FraudInstantCommand(()->{
 //                            shooter.setTargetRPM(4300);
 //                        }),
-                        new IntakeCommand(intake, Intake.flapDown, 0),
+                        new IntakeCommand(intake, Intake.lockedPosition, 0),
                         new PedroFollowCommand(follower, Path6),
-                        new IntakeCommand(intake, Intake.flapDown, 1),
+                        new IntakeCommand(intake, Intake.lockedPosition, 1),
                         new FraudInstantCommand(
                                 ()->turret.update()
                         ),
                         new WaitCommand(300),
                         new FraudInstantCommand(()->{
-                            intake.setFlap(Intake.flapUp);
+                            intake.setFlap(Intake.transferPosition);
                             intake.setTransferSlower(true);
                         }),
                         new WaitCommand(1000),
                         new ParallelCommandGroup(
-                                new IntakeCommand(intake, Intake.flapDown, 1),
+                                new IntakeCommand(intake, Intake.lockedPosition, 1),
                                 new FraudInstantCommand(()->{
                                     intake.setTransferSlower(false);
                                 })
                         ),
                         new PedroFollowCommand(follower, Path9),
                         new StopShooter(shooter),
-                        new IntakeCommand(intake, Intake.flapDown, 0)
+                        new IntakeCommand(intake, Intake.lockedPosition, 0)
                 )
         );
 
         turret.setPose(new Pair<>(32.0, 135.6), -90);
-        intake.setFlap(Intake.flapUp);
+        intake.setFlap(Intake.transferPosition);
     }
 
     private Pose pose; private double meters;

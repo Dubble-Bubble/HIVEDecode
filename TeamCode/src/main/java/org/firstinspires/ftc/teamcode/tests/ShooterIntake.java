@@ -17,7 +17,7 @@ public class ShooterIntake extends OpMode {
     private Shooter shooter;
     public static double hoodAngle = 75;
     public static double velTarget = 0;
-    public static boolean runShooter = false;
+    public static boolean runShooterPID = false, runShooterBangBang = false;
 
     private DcMotor intake;
     private DcMotor transfer;
@@ -35,13 +35,17 @@ public class ShooterIntake extends OpMode {
 
     @Override
     public void loop() {
-        if (runShooter) {
+        if (runShooterPID) {
             shooter.setTargetRPM(velTarget);
             shooter.runShooter();
         }
+        if (runShooterBangBang) {
+            shooter.setTargetRPM(velTarget);
+            shooter.runShooterSus();
+        }
 
         telemetry.addData("targetRPM", velTarget);
-        telemetry.addData("RPM", (shooter.getEncoderVelocity()*60)/28);
+        telemetry.addData("RPM", ((shooter.getEncoderVelocity()*60)/28) * 55/65);
         telemetry.update();
 
         shooter.setHoodAngle(hoodAngle);
