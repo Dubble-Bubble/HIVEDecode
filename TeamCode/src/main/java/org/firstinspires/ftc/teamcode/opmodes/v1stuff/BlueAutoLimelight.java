@@ -1,5 +1,9 @@
-package org.firstinspires.ftc.teamcode.opmodes;
+package org.firstinspires.ftc.teamcode.opmodes.v1stuff;
 
+import android.util.Pair;
+
+import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.arcrobotics.ftclib.command.CommandScheduler;
 import com.arcrobotics.ftclib.command.ParallelCommandGroup;
 import com.arcrobotics.ftclib.command.SequentialCommandGroup;
@@ -9,12 +13,11 @@ import com.pedropathing.geometry.BezierCurve;
 import com.pedropathing.geometry.BezierLine;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.PathChain;
-import com.qualcomm.hardware.limelightvision.Limelight3A;
+import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
-import com.qualcomm.robotcore.hardware.AnalogInput;
-import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.util.ElapsedTime;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
@@ -22,16 +25,16 @@ import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.teamcode.opmodes.commands.FraudInstantCommand;
 import org.firstinspires.ftc.teamcode.opmodes.commands.IntakeCommand;
 import org.firstinspires.ftc.teamcode.opmodes.commands.PedroFollowCommand;
-import org.firstinspires.ftc.teamcode.opmodes.commands.StopShooter;
 import org.firstinspires.ftc.teamcode.pedropathing.Constants;
 import org.firstinspires.ftc.teamcode.systems.Intake;
 import org.firstinspires.ftc.teamcode.systems.Shooter;
+import org.firstinspires.ftc.teamcode.systems.Turret;
 
 @Autonomous
 @Disabled
-public class BlueAuto extends OpMode {
+public class BlueAutoLimelight extends OpMode {
 
-    Follower follower;
+    Follower follower; Turret turret;
 
     public static Pose2D endpose = new Pose2D(DistanceUnit.INCH, 0,0, AngleUnit.RADIANS,0);
 
@@ -45,26 +48,20 @@ public class BlueAuto extends OpMode {
 
     CommandScheduler scheduler;
 
-    private DcMotor turret;
-    private AnalogInput encoder;
-    Limelight3A ll3a;
-    public double targetDeg = 90;
-
-    public static double p = 0.025, i, d;
-
-    double limelightMountAngleDegrees = 10, limelightLensHeightInches = 13.4, goalHeightInches = 29.5, lastTurretTarget = 0;
 
     @Override
     public void init() {
 
-        turret = hardwareMap.dcMotor.get("turret");
-        turret.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.BRAKE);
-
-        encoder = hardwareMap.analogInput.get("encoder");
+        for (LynxModule module : hardwareMap.getAll(LynxModule.class)) {
+            module.setBulkCachingMode(LynxModule.BulkCachingMode.AUTO);
+        }
 
         follower = Constants.createFollower(hardwareMap);
         intake = new Intake(hardwareMap);
         shooter = new Shooter(hardwareMap, telemetry);
+
+        turret = new Turret(hardwareMap, false);
+        turret.setMode(Turret.Mode.odo);
 
         follower.setPose(new Pose(32.5, 135.600, Math.toRadians(-90)));
 
@@ -73,83 +70,100 @@ public class BlueAuto extends OpMode {
         Path5 = paths.Path5; Path6 = paths.Path6; Path7 = paths.Path7; Path8 = paths.Path8;
         Path9 = paths.Path9;
 
+        telemetry = new MultipleTelemetry(FtcDashboard.getInstance().getTelemetry(), telemetry);
+
         scheduler = CommandScheduler.getInstance(); scheduler.reset(); scheduler = CommandScheduler.getInstance();
-        shooter.setHoodAngle(75);
+        shooter.setHoodAngle(50);
 
         scheduler.schedule(
                 new SequentialCommandGroup(
                         new FraudInstantCommand(()->{
-                            shooter.setTargetRPM(3750);
-                            targetDeg = 87;
+                            intake.setFlap(Intake.transferPosition);
+                            intake.setActive(true);
                         }),
-                        new SequentialCommandGroup(
-                                new IntakeCommand(intake, Intake.transferPosition, 1),
-                                new WaitCommand(1000),
-                                new IntakeCommand(intake, Intake.lockedPosition, 1)
-                        ),
+                        new PedroFollowCommand(follower, Path1),
+                        new FraudInstantCommand(()->{
+                            intake.setTransfer(true);
+                        }),
+                        new WaitCommand(650),
                         new ParallelCommandGroup(
+                                new IntakeCommand(intake, Intake.lockedPosition, 1),
                                 new FraudInstantCommand(()->{
-                                    targetDeg = 45;
-                                }),
-                                new PedroFollowCommand(follower, Path1)
-                        ),
-                        new WaitCommand(200),
-                        new IntakeCommand(intake, Intake.lockedPosition, 1),
-                        new ParallelCommandGroup(
-                                new PedroFollowCommand(follower, Path2),
-                                new FraudInstantCommand(()->{
-                                    shooter.setTargetRPM(4200);
-                                    shooter.setHoodAngle(45);
+                                    intake.setTransfer(false);
                                 })
                         ),
+                        new ParallelCommandGroup(
+                                //new PedroFollowCommand(follower, Gurt)
+                        ),
                         new IntakeCommand(intake, Intake.transferPosition, 1),
-                        new WaitCommand(900),
+                        new PedroFollowCommand(follower, Path2),
+                        new FraudInstantCommand(()->{
+                            intake.setTransfer(true);
+                        }),
+                        new WaitCommand(750),
+                        new ParallelCommandGroup(
+                                new IntakeCommand(intake, Intake.lockedPosition, 1),
+                                new FraudInstantCommand(()->{
+                                    intake.setTransfer(false);
+                                })
+                        ),
                         new ParallelCommandGroup(
                                 new PedroFollowCommand(follower, Path3),
                                 new IntakeCommand(intake, Intake.lockedPosition, 1)
                         ),
-                        new WaitCommand(200),
                         new ParallelCommandGroup(
                                 new PedroFollowCommand(follower, Path4),
-                                new FraudInstantCommand(()->{
-                                    shooter.setTargetRPM(4200);
-                                    shooter.setHoodAngle(45);
-                                    targetDeg = 46;
-                                }),
-                                new SequentialCommandGroup(
-                                        new WaitCommand(100),
-                                        new IntakeCommand(intake, Intake.lockedPosition, 1)
-                                )
-                        ),
-                        new IntakeCommand(intake, Intake.transferPosition, 1),
-                        new WaitCommand(900),
-                        new ParallelCommandGroup(
-                                new PedroFollowCommand(follower, Path5),
-                                new IntakeCommand(intake, Intake.lockedPosition, 1)
-                        ),
-                        new WaitCommand(1300),
-                        new FraudInstantCommand(()->{
-                            targetDeg = 47.5;
-                            shooter.setTargetRPM(4400);
-                        }),
-                        new PedroFollowCommand(follower, Path6),
-                        new IntakeCommand(intake, Intake.transferPosition, 1),
-                        new WaitCommand(800),
-                        new ParallelCommandGroup(
-                                new PedroFollowCommand(follower, Path7),
+                                new IntakeCommand(intake, Intake.transferPosition, 1)
 
-                                new IntakeCommand(intake, Intake.lockedPosition, 1)
                         ),
                         new FraudInstantCommand(()->{
-                            shooter.setTargetRPM(4400);
-                            shooter.setHoodAngle(45);
-                            targetDeg = 95.5;
+                            intake.setTransfer(true);
                         }),
+                        new WaitCommand(750),
+                        new ParallelCommandGroup(
+                                new IntakeCommand(intake, Intake.lockedPosition, 1),
+                                new FraudInstantCommand(()->{
+                                    intake.setTransfer(false);
+                                })
+                        ),
+                        new ParallelCommandGroup(
+                                new SequentialCommandGroup(
+                                        new PedroFollowCommand(follower, Path5),
+                                        new PedroFollowCommand(follower, paths.InterPath)
+                                ),
+                                new IntakeCommand(intake, Intake.lockedPosition, 1)
+                        ),
+                        new WaitCommand(1200),
+                        new IntakeCommand(intake, Intake.lockedPosition, 1),
+                        new PedroFollowCommand(follower, Path6),
+                        new ParallelCommandGroup(
+                                new IntakeCommand(intake, Intake.transferPosition, 1),
+                                new FraudInstantCommand(()->{
+                                    intake.setTransfer(true);
+                                })
+                                ),
+                        new WaitCommand(750),
+                        new ParallelCommandGroup(
+                                new IntakeCommand(intake, Intake.lockedPosition, 1),
+                                new FraudInstantCommand(()->{
+                                    intake.setTransfer(false);
+                                })
+                        ),
+                        new ParallelCommandGroup(
+                                new PedroFollowCommand(follower, Path7)
+                        ),
                         new PedroFollowCommand(follower, Path8),
-                        new IntakeCommand(intake, Intake.transferPosition, 1),
-                        new WaitCommand(800),
+                        new FraudInstantCommand(()->{
+                            intake.setTransfer(true);
+                        }),
+                        new WaitCommand(750),
+                        new ParallelCommandGroup(
+                                new IntakeCommand(intake, Intake.lockedPosition, 1),
+                                new FraudInstantCommand(()->{
+                                    intake.setTransfer(false);
+                                })
+                        ),
                         new PedroFollowCommand(follower, Path9),
-                        new StopShooter(shooter),
                         new IntakeCommand(intake, Intake.lockedPosition, 0)
 
 //                        new ParallelCommandGroup(
@@ -182,18 +196,25 @@ public class BlueAuto extends OpMode {
 
     }
 
+    double looptime = 0; boolean turretUpdateFlag = true;
+    ElapsedTime looptimer = new ElapsedTime();
+
+    private Pose pose; private double meters;
+
     @Override
     public void loop() {
         scheduler.run();
-            double turretDeg = analogVoltageToDegrees(encoder.getVoltage());
-
-            double error = AngleUnit.normalizeDegrees(targetDeg-turretDeg);
-
-            turret.setPower(p * error);
-        shooter.runShooter();
         follower.update();
+        pose = follower.getPose();
 
+        turret.setPose(new Pair<>(pose.getX(), pose.getY()), Math.toDegrees(pose.getHeading()));
 
+        meters = turret.distanceToGoal(pose.getX(), pose.getY()) * 0.0254;
+        shooter.setTargetRPM(shooter.getRPMForShot(meters)+1400);
+        shooter.setHoodAngle(shooter.getHoodAngle(meters));
+
+        shooter.runShooter();
+        turret.update();
     }
 
     @Override
@@ -261,23 +282,23 @@ public class BlueAuto extends OpMode {
                             new BezierCurve(
                                     new Pose(57.094, 75.234),
                                     new Pose(36.141, 62.438),
-                                    new Pose(11.406, 62)
+                                    new Pose(21, 65)
                             )
                     )
-                    .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(150))
+                    .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(180))
                     .build();
 
             InterPath = follower.pathBuilder()
                     .addPath(
-                            new BezierLine(new Pose(10.406, 62), new Pose(10.406, 59))
+                            new BezierLine(new Pose(21, 65), new Pose(10.406, 53))
                     )
-                    .setConstantHeadingInterpolation(145)
+                    .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(145))
                     .build();
 
             Path6 = follower
                     .pathBuilder()
                     .addPath(
-                            new BezierLine(new Pose(11.406, 62), new Pose(57.797, 70.875))
+                            new BezierLine(new Pose(10.406, 53), new Pose(57.797, 70.875))
                     )
                     .setLinearHeadingInterpolation(Math.toRadians(150), Math.toRadians(180))
                     .build();
@@ -299,7 +320,7 @@ public class BlueAuto extends OpMode {
                     .addPath(
                             new BezierLine(new Pose(18.984, 35.297), new Pose(57.094, 74.250))
                     )
-                    .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(225))
+                    .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(180))
                     .build();
 
             Path9 = follower
@@ -307,7 +328,7 @@ public class BlueAuto extends OpMode {
                     .addPath(
                             new BezierLine(new Pose(57.094, 74.250), new Pose(36.141, 73.688))
                     )
-                    .setLinearHeadingInterpolation(Math.toRadians(225), Math.toRadians(180))
+                    .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(180))
                     .build();
         }
     }

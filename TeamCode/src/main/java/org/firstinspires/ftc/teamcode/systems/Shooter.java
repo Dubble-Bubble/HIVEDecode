@@ -11,6 +11,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.Telemetry;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
@@ -18,28 +19,41 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 @Config
 public class Shooter {
 
-        public static double kP = 0.001, kI, kD, kF = 0.00015;
-        private PIDController velController;
+    public static double kP = 0.002, kI, kD, kF = 0.000185, velMult = 1;
+    private PIDController velController;
 
-        private DcMotorEx shooter, shooter2; private Servo rightHood, leftHood;
+    private DcMotorEx shooter, shooter2; private Servo rightHood, leftHood;
 
-        private final double ratio = 18.0/168.0, range = 355;
+    VoltageSensor voltageSensor;
 
-        private double getServoPosition(double degrees) {
-            return ((72-degrees)/ratio)/range;
-        }
+    private final double ratio = 18.0/168.0, range = 355;
 
-        public static double p, i, d;
+    private double getServoPosition(double degrees) {
+        return ((72-degrees)/ratio)/range;
+    }
 
-        public double targetRPM = 0;
+    public static DcMotorSimple.Direction s1Direction = DcMotorSimple.Direction.FORWARD, s2Direction = DcMotorSimple.Direction.REVERSE;
 
-        public void setTargetRPM(double rpm) {
-            targetRPM = rpm;
-        }
+    public static double p, i, d;
 
-        VoltageSensor voltageSensor;
+    public double targetRPM = 0;
 
-        Telemetry telemetry;
+    public void setTargetRPM(double rpm) {
+        targetRPM = rpm;
+    }
+
+    Telemetry telemetry;
+
+    public static double hoodCacheTolerance = 0.002;
+    private double cachedHoodPos = Double.NaN;
+
+    public static double motorPowerCacheTolerance = 0.01;
+    private double cachedMotorPower = Double.NaN;
+
+    public void invalidateCaches() {
+        cachedMotorPower = Double.NaN;
+        cachedHoodPos = Double.NaN;
+    }
 
         public Shooter(HardwareMap hardwareMap, Telemetry t) {
             shooter = (DcMotorEx) hardwareMap.dcMotor.get("shooter");
@@ -51,24 +65,29 @@ public class Shooter {
 
             shooter.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
             shooter2.setZeroPowerBehavior(DcMotor.ZeroPowerBehavior.FLOAT);
-            shooter2.setDirection(DcMotorSimple.Direction.REVERSE);
+            shooter.setDirection(s1Direction);
+            shooter2.setDirection(s2Direction);
             leftHood.setDirection(Servo.Direction.REVERSE);
 
-            voltageSensor = hardwareMap.voltageSensor.iterator().next();
-
             velController = new PIDController(kP, kI, kD);
+
+            lastEncoderPos = shooter.getCurrentPosition();
+            lastEncoderTimeNs = System.nanoTime();
+
+            voltageSensor = hardwareMap.voltageSensor.iterator().next();
         }
 
-        private double targetDeg = 0, hoodSet;
+        private double targetDeg = 0, hoodSet, posTemp = 0;
 
         public void setHoodAngle(double degrees) {
-            if (!Double.isNaN(degrees)) {
-                if (degrees >= 72) {
-                    setServos(0.12);
-                } else if (!Double.isNaN(Math.abs(getServoPosition(degrees)))){
-                    setServos(Math.min(Math.max(Math.abs(getServoPosition(degrees)), 0.12), 0.9));
-                }
-            }
+            if (Double.isNaN(degrees)) return;
+
+            posTemp = getLinkageHoodServoPos(degrees);
+
+//            if (Double.isNaN(cachedHoodPos) || Math.abs(posTemp - cachedHoodPos) > hoodCacheTolerance) {
+                setServos(posTemp);
+//                cachedHoodPos = posTemp;
+//            }
         }
 
         private void setServos(double pos) {
@@ -92,28 +111,61 @@ public class Shooter {
 
         power = velController.calculate(rpm, targetRPM) + (kF*targetRPM);
 
-        scalar = 13.2/voltageSensor.getVoltage();
-
         shooter.setPower(power*scalar);
         shooter2.setPower(power*scalar);
         runMs = functionRunLength.milliseconds();
     }
 
-    public void runShooterSus() {
-        functionRunLength.reset();
-        encoderVelocity = -shooter.getVelocity();
+    public boolean atTarget() {
+        return rpm >= kinematicRPMGoal - 50;
+    }
 
-        rpm = ((encoderVelocity*60)/28) * 55/65;
+    double newPower = 0;
+
+    public double getRpm() {
+        return rpm;
+    }
+
+
+    public static double bangBangRPMDropThresh = 50;
+
+    public static double lossCompensator = 1.075, lowPassGain = 0.95;
+
+    private double lastFilteredValue = 0;
+    private double returnFilteredValue(double vRaw) {
+        return lowPassGain * vRaw + (1-lowPassGain) * lastFilteredValue;
+    }
+
+    public static double vConstant = 12;
+    private double vt = 0;
+
+    public double getVt() {
+        return vt;
+    }
+
+    public void runShooterSus() {
+        encoderVelocity = shooter.getVelocity();
+
+        rpm = ((encoderVelocity * 60) / 28) * velMult;
         readRPM = rpm;
 
-        if  (rpm < targetRPM) {
-            shooter.setPower(1);
-            shooter2.setPower(1);
+        vt = vConstant / voltageSensor.getVoltage();
+
+        if (rpm < kinematicRPMGoal - 50) {
+            shooter2.setPower(1 * vt);
+            shooter.setPower(1 * vt);
         } else {
-            shooter.setPower(0);
-            shooter2.setPower(0);
+            shooter2.setPower(kinematicRPMGoal * kF * vt);
+            shooter.setPower(kinematicRPMGoal * kF * vt);
         }
-        runMs = functionRunLength.milliseconds();
+
+        if (Double.isNaN(cachedMotorPower) || Math.abs(newPower - cachedMotorPower) > motorPowerCacheTolerance) {
+            shooter.setPower(newPower);
+            shooter2.setPower(newPower);
+            cachedMotorPower = newPower;
+        }
+
+        setHoodAngle(producedHoodAngle);
     }
 
     public double getRunMs() {
@@ -141,6 +193,7 @@ public class Shooter {
     public void directSet(double p) {
         shooter.setPower(p);
         shooter2.setPower(p);
+        cachedMotorPower = p;
     }
     private double analogVoltageToDegrees(double voltage) {
         return voltage * (360/3.3);
@@ -148,19 +201,51 @@ public class Shooter {
     public void stopShooter() {
         shooter.setPower(0);
         shooter2.setPower(0);
+        cachedMotorPower = 0;
     }
     private double a = 0, b = 0, c = 0, n = 0, t_u = 0, t_g = 0,
             tof = 0, vX = 0, vY = 0, v = 0, m = 0;
-    private double kinematicRPMGoal = 0;
+    private double kinematicRPMGoal = 0, producedHoodAngle = 50;
     public static double w = 1.2;
 
     public double shooterVKinematic() {
         return v;
     }
 
-    public void updateFancyKinematics(double distMeters, double hoodAngleRad) {
-        a = (-distMeters * Math.tan(hoodAngleRad) + w) / (distMeters * distMeters);
-        b = -Math.tan(hoodAngleRad)-(2*a*distMeters);
+    public double deltaServoAngle = 0;
+
+    public double getDeltaServoAngle() {
+        return deltaServoAngle;
+    }
+
+    public static double getLinkageHoodServoPos(double angleDeg) {
+        return (0.00120419*(angleDeg*angleDeg*angleDeg*angleDeg)-0.266152*(angleDeg*angleDeg*angleDeg)+21.81051*(angleDeg*angleDeg)-790.9965*(angleDeg)+10871.9613)/270;
+    }
+
+    private double c1 = 2 * Math.PI * 0.036, c2 = 2 * Math.PI * 0.014 * 84/53;
+    public static double entryAngleDeg = 45;
+    private double entryAngleRad = Math.toRadians(entryAngleDeg);
+
+    private double produceCounterRollerAdjustedVelocity(double v) {
+        return (2 * v) / (c1 + c2);
+    }
+
+    public double getProducedHoodAngle() {
+        return producedHoodAngle;
+    }
+
+    public static double startHoodDivisor = 4, endHoodDivisor = 9, endHoodMeters = 3;
+
+    private double produceEntryAngle(double meters) {
+        return meters <= 1 ? Math.PI/startHoodDivisor : (-(Math.PI/endHoodDivisor)/endHoodMeters) * (meters+1) + (Math.PI/4);
+    }
+
+    private double calculatedEntryAngle = 0.5235;
+
+    public void updateFancyKinematics(double distMeters) {
+        calculatedEntryAngle = Math.toRadians(getHoodAngle(distMeters));
+        a = (-Math.tan(calculatedEntryAngle)*distMeters + w) / (distMeters * distMeters);
+        b = -Math.tan(calculatedEntryAngle) - (2*a*distMeters);
         n = -b/(2*a);
         m = (a * (n*n)) + (b * (n)) + w;
 
@@ -173,7 +258,8 @@ public class Shooter {
 
         v = Math.sqrt((vX*vX) + (vY*vY));
 
-        kinematicRPMGoal = (v / (2*Math.PI * 0.036)) * 60;
+        kinematicRPMGoal = produceCounterRollerAdjustedVelocity(v) * 60 * lossCompensator;
+        producedHoodAngle = Math.toDegrees(calculatedEntryAngle);
     }
 
     public double vMSToRPM(double vMS) {
@@ -186,5 +272,20 @@ public class Shooter {
 
     public double getTof() {
         return tof;
+    }
+
+    private int lastEncoderPos = 0;
+    private long lastEncoderTimeNs = 0;
+
+    public double getBulkVelocity() {
+        int currentPos = shooter.getCurrentPosition(); // bulk cached
+        long currentTimeNs = System.nanoTime();
+
+        double velocity = (currentPos - lastEncoderPos) /
+                ((currentTimeNs - lastEncoderTimeNs) / 1e9);
+
+        lastEncoderPos = currentPos;
+        lastEncoderTimeNs = currentTimeNs;
+        return velocity;
     }
 }

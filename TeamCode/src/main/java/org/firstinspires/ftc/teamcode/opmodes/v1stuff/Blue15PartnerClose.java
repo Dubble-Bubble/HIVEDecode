@@ -1,12 +1,10 @@
-package org.firstinspires.ftc.teamcode.opmodes;
+package org.firstinspires.ftc.teamcode.opmodes.v1stuff;
 
 import android.util.Pair;
 
 import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.arcrobotics.ftclib.command.CommandScheduler;
-import com.arcrobotics.ftclib.command.ParallelCommandGroup;
-import com.arcrobotics.ftclib.command.ParallelRaceGroup;
 import com.arcrobotics.ftclib.command.SequentialCommandGroup;
 import com.arcrobotics.ftclib.command.WaitCommand;
 import com.pedropathing.geometry.Pose;
@@ -239,13 +237,12 @@ public class Blue15PartnerClose extends OpMode {
 
         meters = turret.distanceToGoal(pose.getX(), pose.getY()) * 0.0254;
 
-        shooter.updateFancyKinematics(meters, Math.toRadians(52));
+        shooter.updateFancyKinematics(meters);
         shooter.setTargetRPM(shooter.getKinematicRPMGoal()+rpmBost+100);
         shooter.setHoodAngle(52);
 
         shooter.runShooterSus();
 
-        PurpleAutoLimelight.endpose = new Pose2D(DistanceUnit.INCH, pose.getX(), pose.getY(), AngleUnit.RADIANS, pose.getHeading());
         looptime = looptimer.milliseconds();
 
 

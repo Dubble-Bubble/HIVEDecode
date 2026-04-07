@@ -18,7 +18,7 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
-import org.firstinspires.ftc.teamcode.opmodes.PurpleAutoLimelight;
+import org.firstinspires.ftc.teamcode.opmodes.v1stuff.PurpleAutoLimelight;
 import org.firstinspires.ftc.teamcode.systems.Drivebase;
 import org.firstinspires.ftc.teamcode.systems.Intake;
 import org.firstinspires.ftc.teamcode.systems.Shooter;
@@ -123,7 +123,6 @@ public class SWM2 extends OpMode {
             meters = turret.distanceToGoal(xPos, yPos) * 0.0254;
 
 
-            shooter.updateFancyKinematics(meters, Math.toRadians(shooter.getHoodAngle(meters)));
 
             weight = shooter.getTof() +0.3;
 
@@ -134,7 +133,6 @@ public class SWM2 extends OpMode {
 
             shooter.setHoodAngle(hoodAngle);
 
-            shooter.updateFancyKinematics(meters, Math.toRadians(hoodAngle));
 
             telemetry.addData("vComp", vComp);
 

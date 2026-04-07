@@ -9,6 +9,7 @@ import com.qualcomm.robotcore.hardware.CRServo;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
+import com.qualcomm.robotcore.util.Range;
 
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 
@@ -25,6 +26,8 @@ public class Turret {
     Mode mode = Mode.fixed;
 
     public static double p = 0.035, maxDelta;
+
+    private double servoUnitsPerDegree = 1.0 / 355.0;
 
     private Pair<Double, Double> redGoal = new Pair<>(144.0, 144.0), blueGoal = new Pair<>(0.0, 144.0);
     private Pair<Double, Double> pose;
@@ -49,11 +52,10 @@ public class Turret {
     }
 
     public Turret(HardwareMap hardwareMap, boolean red) {
-        s1 = hardwareMap.servo.get("cts");
-        s2 = hardwareMap.servo.get("mts");
-        s3 = hardwareMap.servo.get("fts");
+        s1 = hardwareMap.servo.get("s1");
+        s2 = hardwareMap.servo.get("s2");
+        s3 = hardwareMap.servo.get("s3");
 
-        encoder = hardwareMap.analogInput.get("encoder");
         this.red = red;
     }
 
@@ -66,8 +68,6 @@ public class Turret {
         }
     }
 
-    ElapsedTime runtime = new ElapsedTime();
-
     private double offset = 1;
 
     public void setOffset(double offset) {
@@ -75,14 +75,12 @@ public class Turret {
     }
 
     public void update() {
-        runtime.reset();
-        turretAngle = analogVoltageToDegrees(encoder.getVoltage());
 
         switch (mode) {
             case odo:
                 if (red) {
-                    odoTarget = Math.atan(
-                            ((redGoal.second+yOffset) - pose.second)/((redGoal.first+xOffset) - pose.first)
+                    odoTarget = Math.atan2(
+                            ((redGoal.second+yOffset) - pose.second), ((redGoal.first+xOffset) - pose.first)
                     );
                 } else {
                     odoTarget = Math.atan2(
@@ -122,29 +120,35 @@ public class Turret {
 
     private double pos = 0;
 
+    public static final double servoCacheTolerance = 0.001; // ~0.32 deg
+    private double cachedServoPos = Double.NaN;
+
+    private double posTemp = 0;
+
     private void setAngle(double angle) {
-        pos = interpolateAngle(angle);
-        if (!Double.isNaN(pos)) {
-            s1.setPosition(pos);
-            s2.setPosition(pos);
-            s3.setPosition(pos);
+        posTemp = interpolateAngle(angle);
+        if (Double.isNaN(posTemp)) return;
+
+        if (Double.isNaN(cachedServoPos) || Math.abs(posTemp - cachedServoPos) > servoCacheTolerance) {
+            s1.setPosition(posTemp);
+            s2.setPosition(posTemp);
+            s3.setPosition(posTemp);
+            cachedServoPos = posTemp;
         }
+    }
+
+    public void invalidateServoCache() {
+        cachedServoPos = Double.NaN;
     }
 
     private double interpolateAngle(double angle) {
-        angle = AngleUnit.normalizeDegrees(angle);
-        if (angle > 165) {
-            angle = 165;
-        } else if (angle < -155) {
-            angle = -155;
-        }
+        double inputAngle = AngleUnit.normalizeDegrees(angle) + offset;
 
-        return (angle + 155) / 320;
+        inputAngle = Range.clip(inputAngle, -170 + offset, 170 + offset);
 
-    }
+        double initialPos = servoUnitsPerDegree * inputAngle;
 
-    private double analogVoltageToDegrees(double voltage) {
-        return voltage * ((360)/3.3);
+        return pos = 0.5 + initialPos;
     }
 
     public void setMode(Mode mode) {
@@ -157,5 +161,9 @@ public class Turret {
         } else {
             return Math.hypot(((blueGoal.first+xOffset)-xPosition), ((blueGoal.second+yOffset)-yPosition));
         }
+    }
+
+    public void incrementOffset(boolean up) {
+        offset = up ? offset + 1 : offset - 1;
     }
 }

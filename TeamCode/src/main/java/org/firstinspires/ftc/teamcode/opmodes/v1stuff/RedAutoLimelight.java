@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.opmodes;
+package org.firstinspires.ftc.teamcode.opmodes.v1stuff;
 
 import android.util.Pair;
 
@@ -29,7 +29,7 @@ import org.firstinspires.ftc.teamcode.systems.Turret;
 
 @Autonomous
 @Disabled
-public class Red18Ball extends OpMode {
+public class RedAutoLimelight extends OpMode {
 
     Follower follower;
 
@@ -63,16 +63,13 @@ public class Red18Ball extends OpMode {
         scheduler = CommandScheduler.getInstance(); scheduler.reset(); scheduler = CommandScheduler.getInstance();
         shooter.setHoodAngle(50);
 
-
         scheduler.schedule(
                 new SequentialCommandGroup(
                         new FraudInstantCommand(()->{
                             intake.setFlap(Intake.transferPosition);
                         }),
                         new IntakeCommand(intake, Intake.transferPosition, 1),
-                        new FraudInstantCommand(()-> turret.update()),
                         new PedroFollowCommand(follower, Path0),
-                        new FraudInstantCommand(()-> turret.update()),
                         new WaitCommand(250),
                         new FraudInstantCommand(()->{
                             intake.setTransfer(true);
@@ -88,14 +85,11 @@ public class Red18Ball extends OpMode {
                                 new PedroFollowCommand(follower, Path1),
                                 new IntakeCommand(intake, Intake.lockedPosition, 1)
                         ),
-                        new FraudInstantCommand(()-> turret.update()),
-
                         new ParallelCommandGroup(
                                 new PedroFollowCommand(follower, Path2),
                                 new IntakeCommand(intake, Intake.transferPosition, 1)
                         ),
-                        new FraudInstantCommand(()-> turret.update()),
-                        new WaitCommand(250),
+                        new WaitCommand(400),
                         new FraudInstantCommand(()->{
                             intake.setTransfer(true);
                         }),
@@ -110,19 +104,15 @@ public class Red18Ball extends OpMode {
                                 new PedroFollowCommand(follower, Path3),
                                 new IntakeCommand(intake, Intake.lockedPosition, 1)
                         ),
-                        new FraudInstantCommand(()-> turret.update()),
-
                         new ParallelCommandGroup(
                                 new PedroFollowCommand(follower, Path4)
                         ),
-                        new FraudInstantCommand(()-> turret.update()),
-
                         new WaitCommand(250),
                         new FraudInstantCommand(()->{
                             intake.setFlap(Intake.transferPosition);
                             intake.setTransfer(true);
                         }),
-                        new WaitCommand(800),
+                        new WaitCommand(700),
                         new ParallelCommandGroup(
                                 new IntakeCommand(intake, Intake.lockedPosition, 1),
                                 new FraudInstantCommand(()->{
@@ -132,59 +122,24 @@ public class Red18Ball extends OpMode {
                         new ParallelCommandGroup(
                                 new SequentialCommandGroup(
                                         new PedroFollowCommand(follower, Path5),
-                                        new WaitCommand(200),
+                                        new WaitCommand(100),
                                         new PedroFollowCommand(follower, paths.PathHalf)
                                 ),
                                 new IntakeCommand(intake, Intake.lockedPosition, 1)
                         ),
-                        new WaitCommand(300),
+                        new WaitCommand(1300),
 //                        new FraudInstantCommand(()->{
 //                            shooter.setTargetRPM(4300);
 //                        }),
-                        new FraudInstantCommand(()-> turret.update()),
-
                         new IntakeCommand(intake, Intake.lockedPosition, 0),
                         new PedroFollowCommand(follower, Path6),
                         new IntakeCommand(intake, Intake.lockedPosition, 1),
-                        new FraudInstantCommand(()-> turret.update()),
-
                         new WaitCommand(250),
                         new FraudInstantCommand(()->{
                             intake.setFlap(Intake.transferPosition);
                             intake.setTransfer(true);
                         }),
-                        new WaitCommand(800),
-                        new ParallelCommandGroup(
-                                new IntakeCommand(intake, Intake.lockedPosition, 1),
-                                new FraudInstantCommand(()->{
-                                    intake.setTransfer(false);
-                                })
-                        ),
-                        new ParallelCommandGroup(
-                                new SequentialCommandGroup(
-                                        new PedroFollowCommand(follower, Path5),
-                                        new WaitCommand(200),
-                                        new PedroFollowCommand(follower, paths.PathHalf)
-                                ),
-                                new IntakeCommand(intake, Intake.lockedPosition, 1)
-                        ),
-                        new WaitCommand(300),
-//                        new FraudInstantCommand(()->{
-//                            shooter.setTargetRPM(4300);
-//                        }),
-                        new FraudInstantCommand(()-> turret.update()),
-
-                        new IntakeCommand(intake, Intake.lockedPosition, 0),
-                        new PedroFollowCommand(follower, Path6),
-                        new IntakeCommand(intake, Intake.lockedPosition, 1),
-                        new FraudInstantCommand(()-> turret.update()),
-
-                        new WaitCommand(250),
-                        new FraudInstantCommand(()->{
-                            intake.setFlap(Intake.transferPosition);
-                            intake.setTransfer(true);
-                        }),
-                        new WaitCommand(800),
+                        new WaitCommand(700),
                         new ParallelCommandGroup(
                                 new IntakeCommand(intake, Intake.lockedPosition, 1),
                                 new FraudInstantCommand(()->{
@@ -196,24 +151,19 @@ public class Red18Ball extends OpMode {
 
                                 new IntakeCommand(intake, Intake.lockedPosition, 1)
                         ),
-                        new FraudInstantCommand(()-> turret.update()),
-
                         new IntakeCommand(intake, Intake.lockedPosition, 0),
                         new PedroFollowCommand(follower, Path8),
                         new IntakeCommand(intake, Intake.lockedPosition, 1),
-                        new FraudInstantCommand(()-> turret.update()),
-
                         new WaitCommand(250),
                         new FraudInstantCommand(()->{
                             intake.setFlap(Intake.transferPosition);
                             intake.setTransfer(true);
                         }),
-                        new WaitCommand(800),
+                        new WaitCommand(700),
                         new ParallelCommandGroup(
                                 new IntakeCommand(intake, Intake.lockedPosition, 1),
                                 new FraudInstantCommand(()->{
                                     intake.setTransfer(false);
-                                    turret.setOffset(0);
                                 })
                         ),
                         new PedroFollowCommand(follower, Path9),
@@ -226,8 +176,6 @@ public class Red18Ball extends OpMode {
 
         turret = new Turret(hardwareMap, true);
         turret.setMode(Turret.Mode.odo);
-
-        turret.setOffset(4);
 
     }
 
@@ -247,15 +195,15 @@ public class Red18Ball extends OpMode {
         shooter.setHoodAngle(shooter.getHoodAngle(meters));
 
         shooter.runShooter();
+        turret.update();
 
-
-        RedAutoLimelight.endpose = new Pose2D(DistanceUnit.INCH, pose.getX(), pose.getY(), AngleUnit.RADIANS, pose.getHeading());
+        endpose = new Pose2D(DistanceUnit.INCH, pose.getX(), pose.getY(), AngleUnit.RADIANS, pose.getHeading());
     }
 
     @Override
     public void stop() {
         Pose pose = follower.getPose();
-        RedAutoLimelight.endpose = new Pose2D(DistanceUnit.INCH, pose.getX(), pose.getY(), AngleUnit.RADIANS, pose.getHeading());
+        endpose = new Pose2D(DistanceUnit.INCH, pose.getX(), pose.getY(), AngleUnit.RADIANS, pose.getHeading());
     }
 
 
@@ -311,7 +259,7 @@ public class Red18Ball extends OpMode {
             Path4 = follower
                     .pathBuilder()
                     .addPath(
-                            new BezierLine(new Pose(124, 56.484), new Pose(88.172, 80))
+                            new BezierLine(new Pose(124, 56.484), new Pose(88.172, 78.609))
                     )
                     .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
                     .build();
@@ -332,7 +280,7 @@ public class Red18Ball extends OpMode {
                     .addPath(
                             new BezierLine(new Pose(125, 65), new Pose(133, 53))
                     )
-                    .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(40))
+                    .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(50))
                     .build();
 
             Path6 = follower
@@ -340,7 +288,7 @@ public class Red18Ball extends OpMode {
                     .addPath(
                             new BezierLine(new Pose(133, 53), new Pose(88.172, 80))
                     )
-                    .setLinearHeadingInterpolation(Math.toRadians(40), Math.toRadians(0))
+                    .setLinearHeadingInterpolation(Math.toRadians(50), Math.toRadians(0))
                     .build();
 
             Path7 = follower

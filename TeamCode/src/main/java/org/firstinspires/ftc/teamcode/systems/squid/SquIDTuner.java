@@ -12,6 +12,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 
 
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
+import org.firstinspires.ftc.teamcode.systems.PinpointConstants;
 import org.firstinspires.ftc.teamcode.systems.squid.SquIDDrive;
 import org.firstinspires.ftc.teamcode.systems.squid.SquIDFollower;
 
@@ -38,9 +39,9 @@ public class SquIDTuner extends OpMode {
         pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
         pinpoint.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
 
-        pinpoint.setEncoderDirections(GoBildaPinpointDriver.EncoderDirection.FORWARD, GoBildaPinpointDriver.EncoderDirection.FORWARD);
+        pinpoint.setEncoderDirections(PinpointConstants.xDirection, PinpointConstants.yDirection);
 
-        pinpoint.setOffsets(-92.15, -111.625, DistanceUnit.MM);
+        pinpoint.setOffsets(PinpointConstants.xOffset, PinpointConstants.yOffset, DistanceUnit.MM);
 
         pinpoint.resetPosAndIMU();
 

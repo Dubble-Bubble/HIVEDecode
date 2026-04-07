@@ -10,19 +10,21 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.teamcode.systems.squid.SquIDController;
 import org.firstinspires.ftc.teamcode.systems.squid.SquIDDrive;
+import org.firstinspires.ftc.teamcode.systems.squid.SquIDFollower;
 
 @Config
 public class PurePursuitSquidFollower {
 
     private SquIDController xC, yC, hC, fxC, fyC, fhC;
-    public static double xp = 0.2, yp = -0.3, hp = 0.2, fxp = 0.05, fyp = -0.15, fhp = 0.4;
-    private PurePursuitSquidDrive drive; private GoBildaPinpointDriver localizer;
+    public static double xp = 0.15, yp = 0.25, hp = 0.65, fxp = 0.1, fyp = 0.15, fhp = 0.4;
+    private SquIDDrive drive; private GoBildaPinpointDriver localizer;
 
     PurePursuitPath path; PurePursuitPath.PurePursuitOutput purePursuitOutput;
 
     public static double translationalTolerance = 2, headingTolerance = 2, fineHeadingThresh = 15, timeout = 1;
+    private double getFineHeadingThreshRadians = Math.toRadians(fineHeadingThresh);
 
-    public PurePursuitSquidFollower(PurePursuitSquidDrive drive, GoBildaPinpointDriver localizer) {
+    public PurePursuitSquidFollower(SquIDDrive drive, GoBildaPinpointDriver localizer) {
         this.drive = drive;
         this.localizer = localizer;
         xC = new SquIDController(xp);
@@ -34,10 +36,11 @@ public class PurePursuitSquidFollower {
         fhC = new SquIDController(fhp);
     }
 
-    private Pose2D targetPose = new Pose2D(0,0,0), currentPose = new Pose2D(0,0,0), error = new Pose2D(0, 0, 0);
+    private SquIDFollower.AdamPose targetPose = new SquIDFollower.AdamPose(0,0,0); SquIDFollower.AdamPose currentPose = new SquIDFollower.AdamPose(0,0,0),
+            error = new SquIDFollower.AdamPose(    0, 0, 0);
     private double x, y, z;
 
-    public void setTargetPose(Pose2D targetPose) {
+    public void setTargetPose(SquIDFollower.AdamPose targetPose) {
         this.targetPose = targetPose;
     }
 
@@ -48,44 +51,68 @@ public class PurePursuitSquidFollower {
     private double posX = 0, posY = 0, heading = 0;
 
     public void read() {
+        if (path == null) return;
         localizer.update();
-        currentPose = new Pose2D(localizer.getPosX(DistanceUnit.INCH), localizer.getPosY(DistanceUnit.INCH), localizer.getHeading(AngleUnit.RADIANS));
-        purePursuitOutput = path.update(currentPose.x, currentPose.y);
-        targetPose = new Pose2D(purePursuitOutput.targetX, purePursuitOutput.targetY, purePursuitOutput.targetHeading);
-        error = subtract(targetPose, currentPose);
-        error.set(new Pose2D(error.x, error.y, findHeadingError(currentPose.h, targetPose.h)));
+        currentPose.set(localizer.getPosX(DistanceUnit.INCH), localizer.getPosY(DistanceUnit.INCH), localizer.getHeading(AngleUnit.RADIANS));
+        purePursuitOutput = path.update(currentPose.getX(), currentPose.getY());
+        targetPose.set(purePursuitOutput.targetX, purePursuitOutput.targetY, purePursuitOutput.targetHeading);
+        error.set(targetPose.getX() - currentPose.getX(), targetPose.getY() - currentPose.getY(),
+                findHeadingError(currentPose.getZ(), targetPose.getZ()));
+    }
+
+    public double getPurePursuitSuggestedHeading() {
+        if (path == null) {
+            return 676767;
+        } else {
+            return purePursuitOutput.targetHeading;
+        }
+    }
+
+    public boolean atPathEnd() {
+        if (path == null) {
+            return false;
+        } else {
+            return purePursuitOutput.atPathEnd;
+        }
     }
 
     ElapsedTime timeoutCheck = new ElapsedTime();
 
+    public static boolean tuning = false;
+
     public void update() {
-        xC.setP(xp);
-        yC.setP(yp);
-        hC.setP(hp);
 
-        fhC.setP(fhp);
-        fyC.setP(fyp);
-        fxC.setP(fxp);
+        if (purePursuitOutput == null) return;
 
-        if (purePursuitOutput.atPathEnd) {
-            x = fxC.calculate(currentPose.x, targetPose.x);
-            y = fyC.calculate(currentPose.y, targetPose.y);
-        } else {
-            x = xC.calculate(currentPose.x, targetPose.x);
-            y = yC.calculate(currentPose.y, targetPose.y);
+        if (tuning) {
+            xC.setP(xp);
+            yC.setP(yp);
+            hC.setP(hp);
+
+            fhC.setP(fhp);
+            fyC.setP(fyp);
+            fxC.setP(fxp);
         }
 
-        if (error.h <= Math.toRadians(fineHeadingThresh)) {
-            z = fhC.calculate(error.h);
+        if (purePursuitOutput.atPathEnd) {
+            x = fxC.calculate(currentPose.getX(), targetPose.getX());
+            y = fyC.calculate(currentPose.getY(), targetPose.getY());
         } else {
-            z = hC.calculate(error.h);
+            x = xC.calculate(currentPose.getX(), targetPose.getX());
+            y = yC.calculate(currentPose.getY(), targetPose.getY());
+        }
+
+        if (Math.abs(error.getZ()) <= Math.toRadians(fineHeadingThresh)) {
+            z = fhC.calculate(error.getZ());
+        } else {
+            z = hC.calculate(error.getZ());
         }
 
         if (!isFinished()) {
-            drive.update(currentPose.h, x, y, z);
+            drive.update(currentPose.getZ(), x, y, z);
             timeoutCheck.reset();
         } else if (isFinished() && timeoutCheck.seconds() < timeout) {
-            drive.update(currentPose.h, x, y, z);
+            drive.update(currentPose.getZ(), x, y, z);
         } else if (isFinished() && timeoutCheck.seconds() > timeout) {
             drive.stop();
         }
@@ -96,7 +123,7 @@ public class PurePursuitSquidFollower {
     }
 
     public boolean isFinished() {
-       return Math.abs(error.x) <= translationalTolerance && Math.abs(error.y) <= translationalTolerance && Math.abs(error.h) <= Math.toRadians(headingTolerance);
+       return Math.abs(error.getX()) <= translationalTolerance && Math.abs(error.getY()) <= translationalTolerance && Math.abs(error.getZ()) <= Math.toRadians(headingTolerance);
     }
 
     public Pose2D subtract(Pose2D pose1, Pose2D pose2) {
@@ -107,21 +134,21 @@ public class PurePursuitSquidFollower {
         );
     }
 
-    public Pose2D getCurrentPose() {
+    public SquIDFollower.AdamPose getCurrentPose() {
         return currentPose;
     }
 
-    public Pose2D getTargetPose() {
+    public SquIDFollower.AdamPose getTargetPose() {
         return targetPose;
     }
 
     public void setCurrentPose(double x, double y, double headingRad) {
-        currentPose = new Pose2D(x, y, headingRad);
+        currentPose.set(x, y, headingRad);
         localizer.setPosition(new org.firstinspires.ftc.robotcore.external.navigation.Pose2D(DistanceUnit.INCH, x, y, AngleUnit.RADIANS, headingRad));
     }
 
     public Pose getPose() {
-        return new Pose(currentPose.x, currentPose.y, currentPose.h);
+        return new Pose(currentPose.getX(), currentPose.getY(), currentPose.getZ());
     }
 
     public Pose2D getPinpointPose() {

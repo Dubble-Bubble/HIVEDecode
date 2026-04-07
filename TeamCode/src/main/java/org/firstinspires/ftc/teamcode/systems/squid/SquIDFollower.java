@@ -14,9 +14,10 @@ import org.firstinspires.ftc.teamcode.systems.squid.SquIDDrive;
 public class SquIDFollower {
 
     private SquIDController xC, yC, hC, fxC, fyC, fhC;
-    public static double xp = 0.2, yp = -0.3, hp = 0.2, fxp = 0.05, fyp = -0.15, fhp = 0.4;
+    public static double xp = 0.2, yp = 0.3, hp = 0.6, fxp = 0.05, fyp = 0.15, fhp = 0.4;
 
     public static double fineTranslationalThresh = 10, fineHeadingThresh = 10, timeout = 1;
+    public static double getFineHeadingThreshRadians = Math.toRadians(fineHeadingThresh);
     private SquIDDrive drive; private GoBildaPinpointDriver localizer;
 
     public static double translationalTolerance = 2, headingTolerance = 2;
@@ -33,7 +34,7 @@ public class SquIDFollower {
         fhC = new SquIDController(fhp);
     }
 
-    private Pose2D targetPose = new Pose2D(0,0,0), currentPose = new Pose2D(0,0,0), error = new Pose2D(0, 0, 0);
+    private Pose2D targetPose = new Pose2D(0,0,0); AdamPose currentPose = new AdamPose(0,0,0), error = new AdamPose(    0, 0, 0);
     private double x, y, z;
 
     public void setTargetPose(Pose2D targetPose) {
@@ -44,21 +45,26 @@ public class SquIDFollower {
 
     public void read() {
         localizer.update();
-        currentPose = new Pose2D(localizer.getPosX(DistanceUnit.INCH), localizer.getPosY(DistanceUnit.INCH), localizer.getHeading(AngleUnit.RADIANS));
-        error = subtract(targetPose, currentPose);
-        error.set(new Pose2D(error.x, error.y, findHeadingError(currentPose.h, targetPose.h)));
+        currentPose.set(localizer.getPosX(DistanceUnit.INCH), localizer.getPosY(DistanceUnit.INCH), localizer.getHeading(AngleUnit.RADIANS));
+        error.set(targetPose.x - currentPose.getX(), targetPose.y - currentPose.getY(),
+                findHeadingError(currentPose.getZ(), targetPose.h));
     }
 
     ElapsedTime timeoutCheck = new ElapsedTime();
 
-    public void update() {
-        xC.setP(xp);
-        yC.setP(yp);
-        hC.setP(hp);
+    public static boolean tuning = false;
 
-        fhC.setP(fhp);
-        fyC.setP(fyp);
-        fxC.setP(fxp);
+    public void update() {
+
+        if (tuning) {
+            xC.setP(xp);
+            yC.setP(yp);
+            hC.setP(hp);
+
+            fhC.setP(fhp);
+            fyC.setP(fyp);
+            fxC.setP(fxp);
+        }
 
         if (totalTranslationError(error.x, error.y) <= fineTranslationalThresh) {
             x = fxC.calculate(currentPose.x, targetPose.x);
@@ -68,17 +74,17 @@ public class SquIDFollower {
             y = yC.calculate(currentPose.y, targetPose.y);
         }
 
-        if (error.h <= Math.toRadians(fineHeadingThresh)) {
-            z = fhC.calculate(error.h);
+        if (Math.abs(error.getZ()) <= getFineHeadingThreshRadians) {
+            z = fhC.calculate(error.getZ());
         } else {
-            z = hC.calculate(error.h);
+            z = hC.calculate(error.getZ());
         }
 
         if (!isFinished()) {
-            drive.update(currentPose.h, x, y, z);
+            drive.update(currentPose.getZ(), x, y, z);
             timeoutCheck.reset();
         } else if (isFinished() && timeoutCheck.seconds() < timeout) {
-            drive.update(currentPose.h, x, y, z);
+            drive.update(currentPose.getZ(), x, y, z);
         } else if (isFinished() && timeoutCheck.seconds() > timeout) {
             drive.stop();
         }
@@ -93,7 +99,9 @@ public class SquIDFollower {
     }
 
     public boolean isFinished() {
-       return Math.abs(error.x) <= translationalTolerance && Math.abs(error.y) <= translationalTolerance && Math.abs(error.h) <= Math.toRadians(headingTolerance);
+       return Math.abs(error.x) <= translationalTolerance &&
+               Math.abs(error.y) <= translationalTolerance &&
+               Math.abs(error.getZ()) <= Math.toRadians(headingTolerance);
     }
 
     public Pose2D subtract(Pose2D pose1, Pose2D pose2) {
@@ -105,7 +113,7 @@ public class SquIDFollower {
     }
 
     public Pose2D getCurrentPose() {
-        return currentPose;
+        return new Pose2D(currentPose.getX(), currentPose.getY(), currentPose.getZ());
     }
 
     public Pose2D getTargetPose() {
@@ -113,15 +121,52 @@ public class SquIDFollower {
     }
 
     public void setCurrentPose(double x, double y, double headingRad) {
-        currentPose = new Pose2D(x, y, headingRad);
+        currentPose.set(x, y, headingRad);
         localizer.setPosition(new org.firstinspires.ftc.robotcore.external.navigation.Pose2D(DistanceUnit.INCH, x, y, AngleUnit.RADIANS, headingRad));
     }
 
     public Pose getPose() {
-        return new Pose(currentPose.x, currentPose.y, currentPose.h);
+        return new Pose(currentPose.getX(), currentPose.getY(),
+                currentPose.getZ());
     }
 
-    public Pose2D getPinpointPose() {
-        return new Pose2D(localizer.getPosX(DistanceUnit.INCH), localizer.getPosY(DistanceUnit.INCH), localizer.getHeading(AngleUnit.DEGREES));
+    public AdamPose getPinpointPose() {
+        return currentPose;
+    }
+
+    public static class AdamPose {
+        private double x = 0, y = 0, z = 0;
+
+        public AdamPose(double x, double y, double z) {
+            this.x = x; this.y = y; this.z = z;
+        }
+
+        public void setY(double y) {
+            this.y = y;
+        }
+
+        public void setX(double x) {
+            this.x = x;
+        }
+
+        public void setZ(double z) {
+            this.z = z;
+        }
+
+        public double getY() {
+            return y;
+        }
+
+        public double getX() {
+            return x;
+        }
+
+        public double getZ() {
+            return z;
+        }
+
+        public void set(double x, double y, double z) {
+            this.x = x; this.y = y; this.z = z;
+        }
     }
 }

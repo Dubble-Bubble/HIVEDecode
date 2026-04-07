@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.opmodes;
+package org.firstinspires.ftc.teamcode.opmodes.v1stuff;
 
 import android.util.Pair;
 
@@ -29,36 +29,40 @@ import org.firstinspires.ftc.teamcode.systems.Turret;
 
 @Autonomous
 @Disabled
-public class RedAutoLimelight extends OpMode {
+public class PurpleAutoLimelight extends OpMode {
 
     Follower follower;
 
     public static Pose2D endpose = new Pose2D(DistanceUnit.INCH, 0,0, AngleUnit.RADIANS,0);
-    Turret turret;
 
     Intake intake;
 
     Shooter shooter;
 
-    public PathChain Path1, Path2, Path3, Path4, Path5, Path6, Path7, Path8, Path9, Path0;
+    public PathChain Path1, Path2, Path3, Path4, Path5, Path6, Path7, Path8, Path9, Gurt;
 
     Paths paths;
 
     CommandScheduler scheduler;
 
+    Turret turret;
+
     @Override
     public void init() {
+
+        turret = new Turret(hardwareMap, false);
+        turret.setMode(Turret.Mode.odo);
 
         follower = Constants.createFollower(hardwareMap);
         intake = new Intake(hardwareMap);
         shooter = new Shooter(hardwareMap, telemetry);
 
-        follower.setPose(new Pose(112, 135.600, Math.toRadians(-90)));
+        follower.setPose(new Pose(32, 135.600, Math.toRadians(-90)));
 
         paths = new Paths(follower);
         Path1 = paths.Path1; Path2 = paths.Path2; Path3 = paths.Path3; Path4 = paths.Path4;
         Path5 = paths.Path5; Path6 = paths.Path6; Path7 = paths.Path7; Path8 = paths.Path8;
-        Path9 = paths.Path9; Path0 = paths.Path0;
+        Path9 = paths.Path9; Gurt = paths.Gurt;
 
         scheduler = CommandScheduler.getInstance(); scheduler.reset(); scheduler = CommandScheduler.getInstance();
         shooter.setHoodAngle(50);
@@ -69,7 +73,7 @@ public class RedAutoLimelight extends OpMode {
                             intake.setFlap(Intake.transferPosition);
                         }),
                         new IntakeCommand(intake, Intake.transferPosition, 1),
-                        new PedroFollowCommand(follower, Path0),
+                        new PedroFollowCommand(follower, Path1),
                         new WaitCommand(250),
                         new FraudInstantCommand(()->{
                             intake.setTransfer(true);
@@ -82,14 +86,14 @@ public class RedAutoLimelight extends OpMode {
                                 })
                         ),
                         new ParallelCommandGroup(
-                                new PedroFollowCommand(follower, Path1),
+                                new PedroFollowCommand(follower, Gurt),
                                 new IntakeCommand(intake, Intake.lockedPosition, 1)
                         ),
                         new ParallelCommandGroup(
                                 new PedroFollowCommand(follower, Path2),
                                 new IntakeCommand(intake, Intake.transferPosition, 1)
                         ),
-                        new WaitCommand(400),
+                        new WaitCommand(250),
                         new FraudInstantCommand(()->{
                             intake.setTransfer(true);
                         }),
@@ -127,7 +131,7 @@ public class RedAutoLimelight extends OpMode {
                                 ),
                                 new IntakeCommand(intake, Intake.lockedPosition, 1)
                         ),
-                        new WaitCommand(1300),
+                        new WaitCommand(1000),
 //                        new FraudInstantCommand(()->{
 //                            shooter.setTargetRPM(4300);
 //                        }),
@@ -169,18 +173,36 @@ public class RedAutoLimelight extends OpMode {
                         new PedroFollowCommand(follower, Path9),
                         new StopShooter(shooter),
                         new IntakeCommand(intake, Intake.lockedPosition, 0)
+
+//                        new ParallelCommandGroup(
+//                                new ManualShooterInputCommand(shooter, 4800, 1.3, 55),
+//                                new SequentialCommandGroup(
+//                                        new WaitCommand(400),
+//                                        new IntakeCommand(intake, Intake.flapUp, 1)
+//                                )
+//                        ),
+//                        new ParallelCommandGroup(
+//                                new PedroFollowCommand(follower, Path5),
+//                                new IntakeCommand(intake, Intake.flapDown, 1)
+//                        ),
+//                        new ParallelCommandGroup(
+//                                new PedroFollowCommand(follower, Path6),
+//                                new IntakeCommand(intake, Intake.flapDown, 0)
+//                        ),
+//                        new IntakeCommand(intake, Intake.flapUp, 1),
+//                        new ParallelCommandGroup(
+//                                new ManualShooterInputCommand(shooter, 6000, 1.3, 50),
+//                                new SequentialCommandGroup(
+//                                        new WaitCommand(400),
+//                                        new IntakeCommand(intake, Intake.flapUp, 1)
+//                                )
+//                        )
                 )
         );
 
-        intake.setFlap(Intake.transferPosition);
-
-        turret = new Turret(hardwareMap, true);
-        turret.setMode(Turret.Mode.odo);
-
     }
 
-    private Pose pose;
-    double meters;
+    private Pose pose; private double meters;
 
     @Override
     public void loop() {
@@ -191,7 +213,7 @@ public class RedAutoLimelight extends OpMode {
         turret.setPose(new Pair<>(pose.getX(), pose.getY()), Math.toDegrees(pose.getHeading()));
 
         meters = turret.distanceToGoal(pose.getX(), pose.getY()) * 0.0254;
-        shooter.setTargetRPM(shooter.getRPMForShot(meters)+1350);
+        shooter.setTargetRPM(shooter.getRPMForShot(meters)+1400);
         shooter.setHoodAngle(shooter.getHoodAngle(meters));
 
         shooter.runShooter();
@@ -216,31 +238,32 @@ public class RedAutoLimelight extends OpMode {
         public PathChain Path5;
         public PathChain Path6;
         public PathChain Path7;
-        public PathChain Path8, Path9, PathHalf, Path0;
+        public PathChain Path8, Path9, PathHalf, Gurt;
 
         public Paths(Follower follower) {
-
-            Path0 = follower
-                    .pathBuilder()
-                    .addPath(
-                            new BezierLine(new Pose(112, 135.5), new Pose(94, 86))
-                    ) .setLinearHeadingInterpolation(Math.toRadians(-90), Math.toRadians(0))
-                    .build();
-
             Path1 = follower
                     .pathBuilder()
                     .addPath(
-                            new BezierLine(new Pose(94, 86), new Pose(124, 82))
+                            new BezierLine(new Pose(32, 135.6), new Pose(48.25, 85)
+                            )
                     )
-                    .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
+                    .setLinearHeadingInterpolation(Math.toRadians(-90), Math.toRadians(180))
+                    .build();
+
+            Gurt = follower
+                    .pathBuilder()
+                    .addPath(
+                            new BezierLine(new Pose(48.25, 85), new Pose(19, 83)
+                            )
+                    ).setConstantHeadingInterpolation(Math.toRadians(180))
                     .build();
 
             Path2 = follower
                     .pathBuilder()
                     .addPath(
-                            new BezierLine(new Pose(124, 82.969), new Pose(94.078, 84.094))
+                            new BezierLine(new Pose(19, 82.969), new Pose(48.25, 85))
                     )
-                    .setConstantHeadingInterpolation(Math.toRadians(0))
+                    .setConstantHeadingInterpolation(Math.toRadians(180))
                     .setVelocityConstraint(0)
                     .build();
 
@@ -248,29 +271,29 @@ public class RedAutoLimelight extends OpMode {
                     .pathBuilder()
                     .addPath(
                             new BezierCurve(
-                                    new Pose(94.078, 84.094),
-                                    new Pose(87.750, 53.719),
-                                    new Pose(124, 56.484)
+                                    new Pose(48.25, 85),
+                                    new Pose(56.8, 53.719),
+                                    new Pose(19, 59)
                             )
                     )
-                    .setConstantHeadingInterpolation(Math.toRadians(0))
+                    .setConstantHeadingInterpolation(Math.toRadians(180))
                     .build();
 
             Path4 = follower
                     .pathBuilder()
                     .addPath(
-                            new BezierLine(new Pose(124, 56.484), new Pose(88.172, 78.609))
+                            new BezierLine(new Pose(19, 59), new Pose(57, 75))
                     )
-                    .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
+                    .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(180))
                     .build();
 
 
             Path5 = follower
                     .pathBuilder()
                     .addPath(
-                            new BezierLine(new Pose(88.172, 80), new Pose(125, 65))
+                            new BezierLine(new Pose(57, 75), new Pose(17, 70))
                     )
-                    .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
+                    .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(180))
                     .setVelocityConstraint(10)
                     .setTranslationalConstraint(2)
                     .build();
@@ -278,45 +301,45 @@ public class RedAutoLimelight extends OpMode {
             PathHalf = follower
                     .pathBuilder()
                     .addPath(
-                            new BezierLine(new Pose(125, 65), new Pose(133, 53))
+                            new BezierLine(new Pose(17, 70), new Pose(11, 53))
                     )
-                    .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(50))
+                    .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(137))
                     .build();
 
             Path6 = follower
                     .pathBuilder()
                     .addPath(
-                            new BezierLine(new Pose(133, 53), new Pose(88.172, 80))
+                            new BezierLine(new Pose(11, 53), new Pose(58, 71))
                     )
-                    .setLinearHeadingInterpolation(Math.toRadians(50), Math.toRadians(0))
+                    .setLinearHeadingInterpolation(Math.toRadians(137), Math.toRadians(180))
                     .build();
 
             Path7 = follower
                     .pathBuilder()
                     .addPath(
                             new BezierCurve(
-                                    new Pose(88.172, 78.609),
-                                    new Pose(70, 35.516),
-                                    new Pose(133, 33)
+                                    new Pose(58, 71),
+                                    new Pose(58, 31),
+                                    new Pose(15, 35)
                             )
                     )
-                    .setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
+                    .setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(180))
                     .build();
 
             Path8 = follower
                     .pathBuilder()
                     .addPath(
-                            new BezierLine(new Pose(133, 33), new Pose(84.656, 73.828))
+                            new BezierLine(new Pose(15, 35), new Pose(57, 74.25))
                     )
-                    .setConstantHeadingInterpolation(Math.toRadians(0))
+                    .setConstantHeadingInterpolation(Math.toRadians(180))
                     .build();
 
             Path9 = follower
                     .pathBuilder()
                     .addPath(
-                            new BezierLine(new Pose(84.656, 73.828), new Pose(95, 73.828))
+                            new BezierLine(new Pose(57, 74.25), new Pose(36, 73))
                     )
-                    .setConstantHeadingInterpolation(Math.toRadians(0))
+                    .setConstantHeadingInterpolation(Math.toRadians(180))
                     .build();
         }
     }

@@ -48,9 +48,10 @@ public class PurePursuitPath {
         this.headingMode = mode;
     }
 
-    public PurePursuitOutput update(double poseX, double poseY) {
+    PurePursuitOutput purePursuitOutput = new PurePursuitOutput();
 
-        PurePursuitOutput purePursuitOutput = new PurePursuitOutput();
+
+    public PurePursuitOutput update(double poseX, double poseY) {
 
         if (path == null || path.length < 2) {
             return purePursuitOutput;
@@ -67,7 +68,19 @@ public class PurePursuitPath {
             purePursuitOutput.atPathEnd = true;
             purePursuitOutput.targetX = end.getX();
             purePursuitOutput.targetY = end.getY();
-            purePursuitOutput.targetHeading = computeHeading(lastIndex - 1);
+            switch (headingMode) {
+                case INDEPENDENT: purePursuitOutput.targetHeading = path[lastIndex].getHeading();
+                    break;
+
+                case TANGENT:
+                    purePursuitOutput.targetHeading = computeHeading(lastIndex - 1);
+                    break;
+
+                case INVERTED_TANGENT:
+                    purePursuitOutput.targetHeading = normalizeAngle(
+                            computeHeading(lastIndex-1) + Math.PI);
+                    break;
+            }
             return purePursuitOutput;
         }
 
@@ -100,22 +113,41 @@ public class PurePursuitPath {
                 purePursuitOutput.targetX = start.getX();
                 purePursuitOutput.targetY = start.getY();
             }
+
+            switch (headingMode) {
+                case INDEPENDENT:
+                    purePursuitOutput.targetHeading = path[lastIndex].getHeading();
+                    if (purePursuitOutput.targetHeading == 0) {
+                        purePursuitOutput.targetHeading = Math.toRadians(90);
+                    }
+                    break;
+                case TANGENT:
+                    purePursuitOutput.targetHeading = computeHeading(startIndex);
+                    break;
+                case INVERTED_TANGENT:
+                    purePursuitOutput.targetHeading = normalizeAngle(computeHeading(startIndex) + Math.PI);
+                    break;
+            }
         }
 
-        switch (headingMode) {
-            case INDEPENDENT:
-                // Grab heading from current segment / lookahead point
-                purePursuitOutput.targetHeading = path[startIndex].getHeading();
-                break;
+        if (found) {
+            switch (headingMode) {
+                case INDEPENDENT:
+                    purePursuitOutput.targetHeading = path[lastIndex].getHeading();
+                    if (purePursuitOutput.targetHeading == 0) {
+                        purePursuitOutput.targetHeading = Math.toRadians(90); // FORCE IT
+                    }
+                    break;
 
-            case TANGENT:
-                purePursuitOutput.targetHeading = computeHeading(startIndex);
-                break;
+                case TANGENT:
+                    purePursuitOutput.targetHeading = computeHeading(startIndex);
+                    break;
 
-            case INVERTED_TANGENT:
-                purePursuitOutput.targetHeading = normalizeAngle(
-                        computeHeading(startIndex) + Math.PI);
-                break;
+                case INVERTED_TANGENT:
+                    purePursuitOutput.targetHeading = normalizeAngle(
+                            computeHeading(startIndex) + Math.PI);
+                    break;
+            }
         }
 
         return purePursuitOutput;
@@ -164,11 +196,15 @@ public class PurePursuitPath {
             double t2 = (-b + sqrtD) * invDenom;
 
             if (t2 >= 0.0 && t2 <= 1.0) {
-                furthestSegment = i;
-                furthestParametricT = t2;
+                if (i > furthestSegment || (i == furthestSegment && t2 > furthestParametricT)) {
+                    furthestSegment = i;
+                    furthestParametricT = t2;
+                }
             } else if (t1 >= 0.0 && t1 <= 1.0) {
-                furthestSegment = i;
-                furthestParametricT = t1;
+                if (i > furthestSegment || (i == furthestSegment && t1 > furthestParametricT)) {
+                    furthestSegment = i;
+                    furthestParametricT = t1;
+                }
             }
         }
 
@@ -180,7 +216,9 @@ public class PurePursuitPath {
         purePursuitOutput.targetX = p1.getX() + furthestParametricT * (p2.getX() - p1.getX());
         purePursuitOutput.targetY = p1.getY() + furthestParametricT * (p2.getY() - p1.getY());
 
-        startIndex = furthestSegment;
+        if (furthestSegment >= startIndex) {
+            startIndex = furthestSegment;
+        }
 
         lastLookaheadX = purePursuitOutput.targetX;
         lastLookaheadY = purePursuitOutput.targetY;

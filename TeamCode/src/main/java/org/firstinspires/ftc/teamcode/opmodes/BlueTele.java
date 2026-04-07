@@ -4,7 +4,9 @@ import static org.firstinspires.ftc.teamcode.tests.ShotAlgTest.c;
 
 import android.util.Pair;
 
+import com.acmerobotics.dashboard.FtcDashboard;
 import com.acmerobotics.dashboard.config.Config;
+import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
@@ -16,12 +18,14 @@ import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
+import org.firstinspires.ftc.teamcode.opmodes.v1stuff.PurpleAutoLimelight;
 import org.firstinspires.ftc.teamcode.systems.Drivebase;
 import org.firstinspires.ftc.teamcode.systems.Intake;
+import org.firstinspires.ftc.teamcode.systems.PinpointConstants;
 import org.firstinspires.ftc.teamcode.systems.Shooter;
 import org.firstinspires.ftc.teamcode.systems.Turret;
 
-@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "BlueTeleop")
+@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "Blue Teleop")
 @Config
 public class BlueTele extends OpMode {
 
@@ -30,7 +34,7 @@ public class BlueTele extends OpMode {
 
     GamepadEx controller;
 
-    private boolean isDpadDownPressed = false, isBPressed = false, isAPressed = false, isDpadUpPressed = false, shootingMode = false, close = true, isYPressed = false;
+    private boolean isDpadDownPressed = false, isBPressed = false, isAPressed = false, isDpadUpPressed = false, shootingMode = false, close = true, turretIncrPressed = false;
 
     private GoBildaPinpointDriver pinpoint;
     public static GoBildaPinpointDriver.EncoderDirection yDirection, xDirection;
@@ -50,21 +54,19 @@ public class BlueTele extends OpMode {
         controller = new GamepadEx(gamepad1);
 
         pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
-        pinpoint.setEncoderResolution(GoBildaPinpointDriver.GoBildaOdometryPods.goBILDA_4_BAR_POD);
 
-        pinpoint.setEncoderDirections(xDirection, yDirection);
-
-        pinpoint.setOffsets(-92.15, -111.625, DistanceUnit.MM);
-
-        pinpoint.setPosition(PurpleAutoLimelight.endpose);
+        PinpointConstants.initializePinpoint(pinpoint);
+        pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, 0, 0, AngleUnit.RADIANS, 0));
 
         turret = new Turret(hardwareMap, false);
 
-        limelight3A = hardwareMap.get(Limelight3A.class, "ll3a");
-        limelight3A.setPollRateHz(250);
-        limelight3A.start();
+//        limelight3A = hardwareMap.get(Limelight3A.class, "ll3a");
+//        limelight3A.setPollRateHz(250);
+//        limelight3A.start();
 
         shooter = new Shooter(hardwareMap, telemetry);
+
+        telemetry = new MultipleTelemetry(telemetry, FtcDashboard.getInstance().getTelemetry());
     }
 
     double looptime = 0, hoodAngle = 0; boolean turretUpdateFlag = true;
@@ -97,10 +99,7 @@ public class BlueTele extends OpMode {
         if (gamepad1.right_bumper && !isDpadDownPressed) {
             shootingMode = !shootingMode;
             close = true;
-        } else if(gamepad1.dpad_down && !isDpadDownPressed) {
-            shootingMode = !shootingMode;
-            close = false;
-        } isDpadDownPressed = gamepad1.right_bumper || gamepad1.dpad_down;
+        }  isDpadDownPressed = gamepad1.right_bumper;
 
         if (gamepad1.left_bumper) {
             intake.setFlap(Intake.transferPosition);
@@ -119,40 +118,27 @@ public class BlueTele extends OpMode {
             turret.setMode(Turret.Mode.odo);
             meters = turret.distanceToGoal(xPos, yPos) * 0.0254;
 
-            hoodAngle = shooter.getHoodAngle(meters);
-
-            shooter.updateFancyKinematics(meters, Math.toRadians(hoodAngle));
+            shooter.updateFancyKinematics(meters);
 
             if (close) {
                 intake.setTransferPower(1);
                 intake.setIntakePower(1);
 
-                shooter.setTargetRPM(shooter.getKinematicRPMGoal()+c);
-
-                shooter.setHoodAngle(hoodAngle);
-                Shooter.w = 1.2;
-                telemetry.addData("target rpm", shooter.getKinematicRPMGoal() + c);
-                telemetry.addData("tof estimate", shooter.getTof());
-                turret.setOffset(2.1);
-                shooter.runShooterSus();
-            } else {
-                intake.setTransferPower(1);
-                intake.setIntakePower(1);
-                shooter.setTargetRPM(farRPM);
-                shooter.setHoodAngle(farHood);
-                turret.setOffset(farOffset);
-                telemetry.addData("target rpm", 4200);
+                telemetry.addData("target rpm", shooter.getKinematicRPMGoal());
+                telemetry.addData("suggested hood angle", shooter.getProducedHoodAngle());
+                telemetry.addData("suggested servo angle delta", shooter.getDeltaServoAngle());
+                telemetry.addData("suggested hood servo position", shooter.getLinkageHoodServoPos(shooter.getProducedHoodAngle()));
+                telemetry.addData("rpm estimate", shooter.getRpm());
+                telemetry.addData("voltage comp term", shooter.getVt());
                 shooter.runShooterSus();
             }
 
             telemetry.addData("meters", meters);
 
-
         } else {
             turret.setMode(Turret.Mode.fixed);
             turret.setTargetDegrees(0);
             intake.setIntakePower(1);
-            turret.setOffset(2.1);
             shooter.stopShooter();
         }
 
@@ -162,23 +148,15 @@ public class BlueTele extends OpMode {
         telemetry.addData("pose y", yPos);
         telemetry.addData("heading", Math.toDegrees(heading));
 
-
-        if (gamepad1.y && !isYPressed && !limelight3A.getLatestResult().getFiducialResults().isEmpty()) {
-            Pose3D pose3 = limelight3A.getLatestResult().getBotpose();
-            double rawHeadingRead = pose3.getOrientation().getYaw(AngleUnit.DEGREES);
-            if (Math.signum(rawHeadingRead) < 0) {
-                rawHeadingRead += 360;
-            }
-            pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, 72+(pose3.getPosition().y*39.37), 72-(pose3.getPosition().x*39.37), AngleUnit.DEGREES,
-                    rawHeadingRead-90));
-        } isYPressed = gamepad1.y;
+        if (gamepad2.left_bumper && !turretIncrPressed) {
+            turret.incrementOffset(true);
+        } else if (gamepad2.right_bumper && !turretIncrPressed) {
+            turret.incrementOffset(false);
+        } turretIncrPressed = gamepad2.left_bumper || gamepad2.right_bumper;
 
         intake.update();
         drivebase.update();
         turret.update();
-        if (!haveWeNanned) {
-            telemetry.update();
-        }
 
         looptime = looptimer.milliseconds();
     }

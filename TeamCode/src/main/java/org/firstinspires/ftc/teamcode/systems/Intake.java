@@ -2,6 +2,7 @@ package org.firstinspires.ftc.teamcode.systems;
 
 import com.acmerobotics.dashboard.config.Config;
 import com.qualcomm.robotcore.hardware.DcMotor;
+import com.qualcomm.robotcore.hardware.DcMotorSimple;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.Servo;
 import com.qualcomm.robotcore.util.ElapsedTime;
@@ -10,7 +11,7 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 public class Intake {
 
     private DcMotor intake, transfer;
-    private Servo flapL, flapR, pto, pto2;
+    private Servo gate, pto, pto2;
 
     public static double shotDelay = 1.2, shotTransferAllowance = 0.4;
     public static double flapActuationTime = 0.8;
@@ -18,14 +19,13 @@ public class Intake {
     private boolean intakeActivityFlag = false;
     private boolean reverseFlag = false;
 
-    public static double transferPosition = 0.65, lockedPosition = 0.5, ptoEngaged = 0.15, ptoDisengaged = 0;
+    public static double transferPosition = 0.55, lockedPosition = 0.4, ptoEngaged = 0.15, ptoDisengaged = 0;
 
     public Intake(HardwareMap hardwareMap) {
         intake = hardwareMap.dcMotor.get("intake");
+        intake.setDirection(DcMotorSimple.Direction.REVERSE);
         transfer = hardwareMap.dcMotor.get("transfer");
-        flapL = hardwareMap.servo.get("lFlap");
-        flapR = hardwareMap.servo.get("rFlap");
-        flapR.setDirection(Servo.Direction.REVERSE);
+        gate = hardwareMap.servo.get("gate");
     }
 
     public void setActive(boolean flag) {
@@ -48,14 +48,14 @@ public class Intake {
 
     public void setTransfer(boolean transfer) {
         if (transfer) {
-            this.transfer.setPower(-transferPower);
+            this.transfer.setPower(transferPower);
         } else {
             this.transfer.setPower(0);
         }
     }
     public void setTransferSlower(boolean transfer) {
         if (transfer) {
-            this.transfer.setPower(-0.8);
+            this.transfer.setPower(0.8);
         } else {
             this.transfer.setPower(0);
         }
@@ -73,7 +73,7 @@ public class Intake {
             intake.setPower(0);
         } else if (reverseFlag && !intakeActivityFlag){
             intake.setPower(-intakePower);
-            transfer.setPower(intakePower);
+            transfer.setPower(-intakePower);
         }
     }
 
@@ -82,8 +82,7 @@ public class Intake {
     }
 
     public void setFlap(double pos) {
-        flapR.setPosition(pos);
-        flapL.setPosition(pos);
+        gate.setPosition(pos);
     }
 
     public void setPtoEngaged(boolean engaged) {

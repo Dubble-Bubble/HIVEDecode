@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.opmodes;
+package org.firstinspires.ftc.teamcode.opmodes.v1stuff;
 
 import android.util.Pair;
 
@@ -12,7 +12,6 @@ import com.pedropathing.paths.PathChain;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
 import com.qualcomm.hardware.sparkfun.SparkFunOTOS;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -31,8 +30,7 @@ import org.firstinspires.ftc.teamcode.systems.squid.SquIDDrive;
 import org.firstinspires.ftc.teamcode.systems.squid.SquIDFollower;
 
 @Autonomous
-@Disabled
-public class Blue15PartnerCloseAmeyVersion extends OpMode {
+public class Red15PartnerClose extends OpMode {
 
     SquIDFollower follower; SquIDDrive drive; boolean turretFlag = false;
 
@@ -56,7 +54,7 @@ public class Blue15PartnerCloseAmeyVersion extends OpMode {
     @Override
     public void init() {
 
-        turret = new Turret(hardwareMap, false);
+        turret = new Turret(hardwareMap, true);
         turret.setMode(Turret.Mode.odo);
 
         intake = new Intake(hardwareMap);
@@ -76,15 +74,17 @@ public class Blue15PartnerCloseAmeyVersion extends OpMode {
         drive = new SquIDDrive(hardwareMap, hardwareMap.voltageSensor.iterator().next());
         follower = new SquIDFollower(drive, pinpoint);
 
-        follower.setCurrentPose(33, 135, Math.PI);
+        follower.setCurrentPose(140-33, 135, 0);
 
         scheduler.schedule(
                 new SequentialCommandGroup(
                         new IntakeCommand(intake, Intake.transferPosition, 1),
-                        new SquiDCommand(follower, 30, 50, new SparkFunOTOS.Pose2D(60, 110, Math.PI)),
-                        new SquiDCommandTimeout(follower, 10, 2, new SparkFunOTOS.Pose2D(50, 80, Math.PI), 0.25),
+                        new SquiDCommand(follower, 30, 50, new SparkFunOTOS.Pose2D(140-60, 110,0)),
+                        new SquiDCommandTimeout(follower, 10, 2, new SparkFunOTOS.Pose2D(140-50, 80, 0), 0.25),
 
-                        new WaitCommand(1100),
+                        new FraudInstantCommand(()->rpmBost = 1300),
+
+                        new WaitCommand(850),
                         new FraudInstantCommand(()->{
                             intake.setFlap(Intake.transferPosition);
                             intake.setTransfer(true);
@@ -95,11 +95,13 @@ public class Blue15PartnerCloseAmeyVersion extends OpMode {
                             intake.setFlap(Intake.lockedPosition);
                         }),
 
-                        new SquiDCommand(follower, 20, 6, new SparkFunOTOS.Pose2D(16, 84, Math.toRadians(179))),
-                        new SquiDCommand(follower, 10, 8, new SparkFunOTOS.Pose2D(10, 75, 0.5*Math.PI)),
-                        new SquiDCommand(follower, 10, 4, new SparkFunOTOS.Pose2D(7, 75, 0.5*Math.PI)),
+                        new FraudInstantCommand(()->rpmBost = 1100),
+
+                        new SquiDCommand(follower, 10, 2, new SparkFunOTOS.Pose2D(140-16, 80, Math.toRadians(2))),
+                        new SquiDCommand(follower, 10, 70, new SparkFunOTOS.Pose2D(140-19, 75, Math.toRadians(150))),
+                        new SquiDCommand(follower, 10, 9, new SparkFunOTOS.Pose2D(140-8, 75, 0.5*Math.PI)),
                         new WaitCommand(1500),
-                        new SquiDCommandTimeout(follower, 10, 20, new SparkFunOTOS.Pose2D(50, 80, Math.PI), 0.25),
+                        new SquiDCommandTimeout(follower, 10, 20, new SparkFunOTOS.Pose2D(140-50, 80, 0), 0.25),
 
                         new WaitCommand(400),
                         new FraudInstantCommand(()->{
@@ -112,34 +114,12 @@ public class Blue15PartnerCloseAmeyVersion extends OpMode {
                             intake.setFlap(Intake.lockedPosition);
                         }),
 
-
-                        new FraudInstantCommand(()->turret.setOffset(2)),
-                        new SquiDCommand(follower, 20, 15, new SparkFunOTOS.Pose2D(50, 38, Math.PI)),
-                        new SquiDCommand(follower, 10,2, new SparkFunOTOS.Pose2D(10, 38, Math.PI)),
-                        new SquiDCommandTimeout(follower, 10,2, new SparkFunOTOS.Pose2D(50, 80, Math.PI), 0.25),
-
-                        new WaitCommand(400),
-                        new FraudInstantCommand(()->{
-                            intake.setFlap(Intake.transferPosition);
-                            intake.setTransfer(true);
-                        }),
-                        new WaitCommand(700),
-                        new FraudInstantCommand(()->{
-                            intake.setTransfer(false);
-                            intake.setFlap(Intake.lockedPosition);
-                        }),
-
-                        new SquiDCommand(follower, 10, 15, new SparkFunOTOS.Pose2D(16, 70, Math.PI)),
-                        new WaitCommand(500),
-                        new SquiDCommand(follower, 10,2, new SparkFunOTOS.Pose2D(50, 80, Math.PI)),
-
-
-                        new SquiDCommand(follower, 4, controlPointHeadingTol, new SparkFunOTOS.Pose2D(50, 60, Math.PI)),
-                        new SquiDCommand(follower, 15,9, new SparkFunOTOS.Pose2D(23, 60, Math.PI)),
-                        new SquiDCommand(follower, 20,20, new SparkFunOTOS.Pose2D(13, 69, Math.toRadians(180))),
+                        new SquiDCommand(follower, 4, controlPointHeadingTol, new SparkFunOTOS.Pose2D(140-50, 57, 0)),
+                        new SquiDCommand(follower, 15,9, new SparkFunOTOS.Pose2D(140-18, 62, 0)),
+                        new SquiDCommand(follower, 20,20, new SparkFunOTOS.Pose2D(140-14, 67, 0)),
 
                         new WaitCommand(900),
-                        new SquiDCommandTimeout(follower, 10,2, new SparkFunOTOS.Pose2D(50, 80, Math.PI), 0.25),
+                        new SquiDCommandTimeout(follower, 10,2, new SparkFunOTOS.Pose2D(140-50, 80, 0), 0.25),
 
                         new WaitCommand(400),
                         new FraudInstantCommand(()->{
@@ -152,12 +132,33 @@ public class Blue15PartnerCloseAmeyVersion extends OpMode {
                             intake.setFlap(Intake.lockedPosition);
                         }),
 
-                        new SquiDCommand(follower, 10, 15, new SparkFunOTOS.Pose2D(16, 70, Math.PI)),
+                        new FraudInstantCommand(()->turret.setOffset(4.5)),
+
+                        new SquiDCommand(follower, 10, 15, new SparkFunOTOS.Pose2D(140-16, 76.5, 0)),
+                        new WaitCommand(200),
+                        new SquiDCommand(follower, 10,15, new SparkFunOTOS.Pose2D(140-50, 80, 0)),
+
+                        new SquiDCommand(follower, 20, 15, new SparkFunOTOS.Pose2D(140-50, 38, 0)),
+                        new SquiDCommand(follower, 10,2, new SparkFunOTOS.Pose2D(140-10, 38, 0)),
+                        new SquiDCommandTimeout(follower, 10,2, new SparkFunOTOS.Pose2D(140-50, 80, 0), 0.25),
+
+                        new WaitCommand(400),
+                        new FraudInstantCommand(()->{
+                            intake.setFlap(Intake.transferPosition);
+                            intake.setTransfer(true);
+                        }),
+                        new WaitCommand(700),
+                        new FraudInstantCommand(()->{
+                            intake.setTransfer(false);
+                            intake.setFlap(Intake.lockedPosition);
+                        }),
+
+                        new SquiDCommand(follower, 10, 15, new SparkFunOTOS.Pose2D(140-16, 76.5, 0)),
                         new WaitCommand(1800),
-                        new SquiDCommand(follower, 10,2, new SparkFunOTOS.Pose2D(28, 56, Math.PI)),
-                        new SquiDCommand(follower, 10,2, new SparkFunOTOS.Pose2D(6, 38, Math.PI)),
+                        new SquiDCommand(follower, 10,2, new SparkFunOTOS.Pose2D(140-28, 56, 0)),
+                        new SquiDCommand(follower, 10,12, new SparkFunOTOS.Pose2D(140-6, 38, 0)),
                         new WaitCommand(250),
-                        new SquiDCommand(follower, 10,2, new SparkFunOTOS.Pose2D(50, 80, Math.PI)),
+                        new SquiDCommand(follower, 10,2, new SparkFunOTOS.Pose2D(144-50, 80, 0)),
 
                         new WaitCommand(400),
                         new FraudInstantCommand(()->{
@@ -170,14 +171,16 @@ public class Blue15PartnerCloseAmeyVersion extends OpMode {
                             intake.setFlap(Intake.lockedPosition);
                         }),
 
-                        new SquiDCommand(follower, 10,2, new SparkFunOTOS.Pose2D(32, 72, Math.PI)),
+                        new SquiDCommand(follower, 10,2, new SparkFunOTOS.Pose2D(140-32, 72, 0)),
                         new StopShooter(shooter),
                         new IntakeCommand(intake, Intake.lockedPosition, 0)
                 )
         );
 
-        turret.setPose(new Pair<>(33.0, 135.0), 180);
+        turret.setPose(new Pair<>(144-33.0, 135.0), 0);
         intake.setFlap(Intake.transferPosition);
+
+        turret.setOffset(4.5);
 
         telemetry = new MultipleTelemetry(FtcDashboard.getInstance().getTelemetry(), telemetry);
 
@@ -197,8 +200,8 @@ public class Blue15PartnerCloseAmeyVersion extends OpMode {
             pinpoint.update();
         }
         if (pinpoint.getLoopTime() > 0) {
-            pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, 33, 135, AngleUnit.RADIANS, Math.PI));
-            follower.setCurrentPose(33, 135, Math.PI);
+            pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, 140-33, 135, AngleUnit.RADIANS, 0));
+            follower.setCurrentPose(140-33, 135, 0);
             if (pinpointReady) {
                 pinpoint.update();
             }
@@ -234,8 +237,7 @@ public class Blue15PartnerCloseAmeyVersion extends OpMode {
 
         meters = turret.distanceToGoal(pose.getX(), pose.getY()) * 0.0254;
 
-        shooter.updateFancyKinematics(meters, Math.toRadians(52));
-        shooter.setTargetRPM(shooter.getKinematicRPMGoal()+rpmBost);
+        shooter.setTargetRPM(shooter.getKinematicRPMGoal()+rpmBost+100);
         shooter.setHoodAngle(52);
 
         shooter.runShooterSus();

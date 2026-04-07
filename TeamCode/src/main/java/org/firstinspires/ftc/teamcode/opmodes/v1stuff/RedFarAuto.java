@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.opmodes;
+package org.firstinspires.ftc.teamcode.opmodes.v1stuff;
 
 import android.util.Pair;
 
@@ -27,7 +27,7 @@ import org.firstinspires.ftc.teamcode.systems.Shooter;
 import org.firstinspires.ftc.teamcode.systems.Turret;
 
 @Autonomous
-public class BlueFarAuto extends OpMode {
+public class RedFarAuto extends OpMode {
 
     Follower follower;
 
@@ -48,14 +48,14 @@ public class BlueFarAuto extends OpMode {
     @Override
     public void init() {
 
-        turret = new Turret(hardwareMap, false);
+        turret = new Turret(hardwareMap, true);
         turret.setMode(Turret.Mode.odo);
 
         follower = Constants.createFollower(hardwareMap);
         intake = new Intake(hardwareMap);
         shooter = new Shooter(hardwareMap, telemetry);
 
-        follower.setPose(new Pose(56, 8, Math.toRadians(180)));
+        follower.setPose(new Pose(144-56, 8, Math.toRadians(0)));
 
         paths = new Paths(follower);
         Path1 = paths.Path1; Path2 = paths.Path2; Path3 = paths.Path3;
@@ -73,9 +73,9 @@ public class BlueFarAuto extends OpMode {
                         ),
                         new WaitCommand(800),
                         new FraudInstantCommand(()->{
-                                intake.setTransferSlower(false);
-                                intake.setFlap(Intake.lockedPosition);
-                            }
+                            intake.setTransferSlower(false);
+                            intake.setFlap(Intake.lockedPosition);
+                        }
                         ),
                         new PedroFollowCommand(follower, Path1),
                         new PedroFollowCommand(follower, Path2),
@@ -123,6 +123,7 @@ public class BlueFarAuto extends OpMode {
                         }),
 
                         new PedroFollowCommand(follower, Path1),
+                        new FraudInstantCommand(()->turret.setOffset(-2)),
                         new IntakeCommand(intake, Intake.lockedPosition, 0),
                         new WaitCommand(500),
                         new PedroFollowCommand(follower, Path2),
@@ -139,9 +140,10 @@ public class BlueFarAuto extends OpMode {
                 )
         );
 
-        turret.setPose(new Pair<>(56.0, 8.0), 180);
+        turret.setPose(new Pair<>(144-56.0, 8.0), 0);
         turret.update();
         intake.setFlap(Intake.lockedPosition);
+        turret.setOffset(0);
     }
 
     private Pose pose; private double meters;
@@ -151,27 +153,23 @@ public class BlueFarAuto extends OpMode {
         scheduler.run();
         follower.update();
         pose = follower.getPose();
-        turret.setOffset(-4);
 
         turret.setPose(new Pair<>(pose.getX(), pose.getY()), Math.toDegrees(pose.getHeading()));
 
-//        meters = turret.distanceToGoal(pose.getX(), pose.getY()) * 0.0254;
-//        shooter.updateFancyKinematics(meters, Math.toRadians(47));
-
-        shooter.setTargetRPM(4350);
+        meters = turret.distanceToGoal(pose.getX(), pose.getY()) * 0.0254;
+        shooter.setTargetRPM(4400);
         shooter.setHoodAngle(46);
-
 
         shooter.runShooterSus();
         turret.update();
 
-        PurpleAutoLimelight.endpose = new Pose2D(DistanceUnit.INCH, pose.getX(), pose.getY(), AngleUnit.RADIANS, pose.getHeading());
+        RedAutoLimelight.endpose = new Pose2D(DistanceUnit.INCH, pose.getX(), pose.getY(), AngleUnit.RADIANS, pose.getHeading());
     }
 
     @Override
     public void stop() {
         Pose pose = follower.getPose();
-        PurpleAutoLimelight.endpose = new Pose2D(DistanceUnit.INCH, pose.getX(), pose.getY(), AngleUnit.RADIANS, pose.getHeading());
+        RedAutoLimelight.endpose = new Pose2D(DistanceUnit.INCH, pose.getX(), pose.getY(), AngleUnit.RADIANS, pose.getHeading());
         turret.setOffset(-2);
     }
 
@@ -188,11 +186,11 @@ public class BlueFarAuto extends OpMode {
         public Paths(Follower follower) {
             Path1 = follower.pathBuilder().addPath(
                             new BezierLine(
-                                    new Pose(56.000, 8.000),
+                                    new Pose(144-56.000, 8.000),
 
-                                    new Pose(8, 9)
+                                    new Pose(144-7.5, 8.5)
                             )
-                    ).setLinearHeadingInterpolation(Math.toRadians(180), Math.toRadians(180))
+                    ).setLinearHeadingInterpolation(Math.toRadians(0), Math.toRadians(0))
                     .setTranslationalConstraint(12)
                     .setVelocityConstraint(20)
                     .setTimeoutConstraint(0)
@@ -200,31 +198,31 @@ public class BlueFarAuto extends OpMode {
 
             Path2 = follower.pathBuilder().addPath(
                             new BezierLine(
-                                    new Pose(8, 9),
+                                    new Pose(144-10, 8.5),
 
-                                    new Pose(56.000, 8.5)
+                                    new Pose(144-56.000, 8.5)
                             )
-                    ).setConstantHeadingInterpolation(Math.toRadians(180))
+                    ).setConstantHeadingInterpolation(Math.toRadians(0))
                     .setBrakingStart(3)
                     .build();
 
             Path3 = follower.pathBuilder().addPath(
                             new BezierCurve(
-                                    new Pose(56.000, 8.5),
-                                    new Pose(56.000, 38),
-                                    new Pose(18, 40)
+                                    new Pose(144-56.000, 8.5),
+                                    new Pose(144-56.000, 38),
+                                    new Pose(144-18, 40)
                             )
-                    ).setConstantHeadingInterpolation(Math.toRadians(180))
+                    ).setConstantHeadingInterpolation(Math.toRadians(0))
 
                     .build();
 
             Path4 = follower.pathBuilder().addPath(
                             new BezierLine(
-                                    new Pose(18, 35.959),
+                                    new Pose(144-18, 35.959),
 
-                                    new Pose(56.000, 8.500)
+                                    new Pose(144-56.000, 8.500)
                             )
-                    ).setConstantHeadingInterpolation(Math.toRadians(180))
+                    ).setConstantHeadingInterpolation(Math.toRadians(0))
                     .setBrakingStart(3)
                     .build();
 

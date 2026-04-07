@@ -1,6 +1,4 @@
-package org.firstinspires.ftc.teamcode.opmodes;
-
-import static org.firstinspires.ftc.teamcode.tests.ShotAlgTest.c;
+package org.firstinspires.ftc.teamcode.opmodes.v1stuff;
 
 import android.util.Pair;
 
@@ -9,15 +7,14 @@ import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
 import com.arcrobotics.ftclib.command.CommandScheduler;
 import com.arcrobotics.ftclib.command.ParallelCommandGroup;
+import com.arcrobotics.ftclib.command.ParallelRaceGroup;
 import com.arcrobotics.ftclib.command.SequentialCommandGroup;
 import com.arcrobotics.ftclib.command.WaitCommand;
 import com.pedropathing.geometry.Pose;
 import com.pedropathing.paths.PathChain;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
-import com.qualcomm.hardware.lynx.LynxModule;
 import com.qualcomm.hardware.sparkfun.SparkFunOTOS;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
-import com.qualcomm.robotcore.eventloop.opmode.Disabled;
 import com.qualcomm.robotcore.eventloop.opmode.OpMode;
 import com.qualcomm.robotcore.util.ElapsedTime;
 
@@ -35,12 +32,9 @@ import org.firstinspires.ftc.teamcode.systems.Turret;
 import org.firstinspires.ftc.teamcode.systems.squid.SquIDDrive;
 import org.firstinspires.ftc.teamcode.systems.squid.SquIDFollower;
 
-import java.util.List;
-
 @Autonomous
 @Config
-@Disabled
-public class SquiDBlue18 extends OpMode {
+public class ModifiedBlueSquid18 extends OpMode {
 
     SquIDFollower follower; SquIDDrive drive; boolean turretFlag = false;
 
@@ -56,12 +50,10 @@ public class SquiDBlue18 extends OpMode {
 
     Turret turret;
 
-    List<LynxModule> allHubs;
-
     private GoBildaPinpointDriver pinpoint;
     public static GoBildaPinpointDriver.EncoderDirection yDirection, xDirection;
 
-    public static double controlPointTol = 30, controlPointHeadingTol = 45;
+    public static double controlPointTol = 30, controlPointHeadingTol = 45, rpmBost = 1100;
 
     @Override
     public void init() {
@@ -95,7 +87,7 @@ public class SquiDBlue18 extends OpMode {
                         }),
                         new IntakeCommand(intake, Intake.transferPosition, 1),
                         new SquiDCommand(follower, 30, 50, new SparkFunOTOS.Pose2D(60, 110, Math.PI)),
-                        new SquiDCommandTimeout(follower, 10, 2, new SparkFunOTOS.Pose2D(50, 84, Math.PI), 0.25),
+                        new SquiDCommandTimeout(follower, 10, 2, new SparkFunOTOS.Pose2D(50, 80, Math.PI), 0.25),
                         new FraudInstantCommand(()->turretFlag = true),
                         new WaitCommand(300),
                         new FraudInstantCommand(()->{
@@ -108,9 +100,90 @@ public class SquiDBlue18 extends OpMode {
                         }),
                         new WaitCommand(600),
                         new ParallelCommandGroup(
-                                new FraudInstantCommand(()->{
-                                    intake.setTransfer(false);
-                                })
+                                new SequentialCommandGroup(
+                                        new FraudInstantCommand(()->{
+                                            intake.setTransfer(false);
+                                        }),
+                                        new FraudInstantCommand(()->turretFlag = false)
+                                ),
+                                new ParallelCommandGroup(
+                                        new SequentialCommandGroup(
+                                                new SquiDCommand(follower, 4, controlPointHeadingTol, new SparkFunOTOS.Pose2D(58, 62, Math.PI)),
+                                                new SquiDCommand(follower, 10,2, new SparkFunOTOS.Pose2D(8, 62, Math.PI))
+                                        ),
+                                        new IntakeCommand(intake, Intake.lockedPosition, 1)
+                                )
+                        ),
+                        new FraudInstantCommand(
+                                ()->turret.update()
+                        ),
+                        new SquiDCommand(follower, 25, 10, new SparkFunOTOS.Pose2D(50, 60, Math.PI)),
+                        new FraudInstantCommand(()->turret.setOffset(3)),
+                        new SquiDCommandTimeout(follower, 10,2, new SparkFunOTOS.Pose2D(50, 80, Math.PI), 0.25),
+                        new FraudInstantCommand(()->turretFlag = true),
+                        new WaitCommand(500),
+                        new FraudInstantCommand(()->{
+                            intake.setFlap(Intake.transferPosition);
+                            intake.setTransfer(true);
+                        }),
+                        new FraudInstantCommand(()->{
+                            intake.setFlap(Intake.transferPosition);
+                            intake.setTransfer(true);
+                        }),
+                        new WaitCommand(700),
+                        new ParallelCommandGroup(
+                                new SequentialCommandGroup(
+                                        new FraudInstantCommand(()->{
+                                            intake.setTransfer(false);
+                                        }),
+                                        new FraudInstantCommand(()->turretFlag = false)
+                                ),
+                                new SquiDCommand(follower, 8, 8, new SparkFunOTOS.Pose2D(13, 65, Math.toRadians(155)))
+                        ),
+                        new FraudInstantCommand(()->turret.setOffset(3)),
+                        new FraudInstantCommand(
+                                ()->turret.update()
+                        ),
+                        new ParallelCommandGroup(
+                                new SequentialCommandGroup(
+                                        new WaitCommand(500),
+                                        new SquiDCommand(follower, 8, 8, new SparkFunOTOS.Pose2D(8, 54, Math.toRadians(145))),
+                                        new WaitCommand(500),
+                                        new ParallelRaceGroup(
+                                                new SquiDCommandTimeout(follower, 0.2, 0.2, new SparkFunOTOS.Pose2D(8, 56, Math.toRadians(180)), 0.6),
+                                                new WaitCommand(400)
+                                        )
+                                )
+                        ),
+                        new ParallelCommandGroup(
+                                new SequentialCommandGroup(
+                                        new WaitCommand(600),
+                                        new IntakeCommand(intake, Intake.lockedPosition, 0)
+                                ),
+                                new SequentialCommandGroup(
+                                        new SquiDCommand(follower,10, controlPointHeadingTol, new SparkFunOTOS.Pose2D(45, 56, Math.PI)),
+                                        new SquiDCommandTimeout(follower, 10,2, new SparkFunOTOS.Pose2D(50, 80, Math.PI), 0.25)
+                                )
+                        ),
+                        new IntakeCommand(intake, Intake.lockedPosition, 1),
+                        new FraudInstantCommand(()->turretFlag = true),
+                        new WaitCommand(500),
+                        new FraudInstantCommand(()->{
+                            intake.setFlap(Intake.transferPosition);
+                            intake.setTransfer(true);
+                        }),
+                        new FraudInstantCommand(()->{
+                            intake.setFlap(Intake.transferPosition);
+                            intake.setTransfer(true);
+                        }),
+                        new WaitCommand(700),
+                        new ParallelCommandGroup(
+                                new SequentialCommandGroup(
+                                        new FraudInstantCommand(()->{
+                                            intake.setTransfer(false);
+                                        }),
+                                        new FraudInstantCommand(()->turretFlag = false)
+                                )
                         ),
                         new FraudInstantCommand(()->turretFlag = false),
                         new ParallelCommandGroup(
@@ -125,7 +198,7 @@ public class SquiDBlue18 extends OpMode {
                                 new IntakeCommand(intake, Intake.transferPosition, 1)
                         ),
                         new FraudInstantCommand(()->turretFlag = true),
-                        new WaitCommand(400),
+                        new WaitCommand(500),
                         new FraudInstantCommand(()->{
                             intake.setFlap(Intake.transferPosition);
                             intake.setTransfer(true);
@@ -143,8 +216,7 @@ public class SquiDBlue18 extends OpMode {
                                 ),
                                 new ParallelCommandGroup(
                                         new SequentialCommandGroup(
-                                                new SquiDCommand(follower, controlPointTol,controlPointHeadingTol, new SparkFunOTOS.Pose2D(54, 62, Math.PI)),
-                                                new SquiDCommand(follower, 10,2, new SparkFunOTOS.Pose2D(9, 62, Math.PI))
+                                                new SquiDCommand(follower, 8, 8, new SparkFunOTOS.Pose2D(13, 65, Math.toRadians(155)))
                                         ),
                                         new IntakeCommand(intake, Intake.lockedPosition, 1)
                                 )
@@ -152,90 +224,27 @@ public class SquiDBlue18 extends OpMode {
                         new FraudInstantCommand(
                                 ()->turret.update()
                         ),
-                        new SquiDCommand(follower, 25, 10, new SparkFunOTOS.Pose2D(50, 60, Math.PI)),
-                        new FraudInstantCommand(()->turret.setOffset(-2)),
-                        new SquiDCommandTimeout(follower, 10,2, new SparkFunOTOS.Pose2D(50, 80, Math.PI), 0.25),
-                        new FraudInstantCommand(()->turretFlag = true),
-                        new WaitCommand(400),
-                        new FraudInstantCommand(()->{
-                            intake.setFlap(Intake.transferPosition);
-                            intake.setTransfer(true);
-                        }),
-                        new FraudInstantCommand(()->{
-                            intake.setFlap(Intake.transferPosition);
-                            intake.setTransfer(true);
-                        }),
-                        new WaitCommand(700),
                         new ParallelCommandGroup(
                                 new SequentialCommandGroup(
-                                        new FraudInstantCommand(()->{
-                                            intake.setTransfer(false);
-                                        }),
-                                        new FraudInstantCommand(()->turretFlag = false)
-                                ),
-                                new SquiDCommand(follower, 8, 8, new SparkFunOTOS.Pose2D(13, 65, Math.toRadians(155)))
-                        ),
-                        new FraudInstantCommand(()->turret.setOffset(-2)),
-                        new FraudInstantCommand(
-                                ()->turret.update()
-                        ),
-                        new ParallelCommandGroup(
-                                new WaitCommand(1500),
-                                new SequentialCommandGroup(
-                                        new WaitCommand(300),
-                                        new SquiDCommand(follower, 8, 8, new SparkFunOTOS.Pose2D(8, 54, Math.toRadians(145))),
-                                        new WaitCommand(800),
-                                        new SquiDCommandTimeout(follower, 3, 5, new SparkFunOTOS.Pose2D(21, 55, Math.toRadians(180)), 0.4)
-                                )
-                        ),
-                        new ParallelCommandGroup(
-                                new SequentialCommandGroup(
-                                        new IntakeCommand(intake, Intake.lockedPosition, 0)
-                                ),
-                                new SquiDCommandTimeout(follower, 10,2, new SparkFunOTOS.Pose2D(50, 80, Math.PI), 0.25)
-                        ),
-                        new IntakeCommand(intake, Intake.lockedPosition, 1),
-                        new FraudInstantCommand(()->turretFlag = true),
-                        new WaitCommand(400),
-                        new FraudInstantCommand(()->{
-                            intake.setFlap(Intake.transferPosition);
-                            intake.setTransfer(true);
-                        }),
-                        new FraudInstantCommand(()->{
-                            intake.setFlap(Intake.transferPosition);
-                            intake.setTransfer(true);
-                        }),
-                        new WaitCommand(700),
-                        new ParallelCommandGroup(
-                                new SequentialCommandGroup(
-                                        new FraudInstantCommand(()->{
-                                            intake.setTransfer(false);
-                                        }),
-                                        new FraudInstantCommand(()->turretFlag = false)
-                                ),
-                                new SquiDCommand(follower, 8, 8, new SparkFunOTOS.Pose2D(13, 65, Math.toRadians(155)))
-                        ),
-                        new FraudInstantCommand(
-                                ()->turret.update()
-                        ),
-                        new ParallelCommandGroup(
-                                new WaitCommand(1500),
-                                new SequentialCommandGroup(
-                                        new WaitCommand(800),
+                                        new WaitCommand(500),
                                         new SquiDCommand(follower, 8, 8, new SparkFunOTOS.Pose2D(8, 54, Math.toRadians(145))),
                                         new WaitCommand(500),
-                                        new SquiDCommandTimeout(follower, 3, 5, new SparkFunOTOS.Pose2D(15, 55, Math.toRadians(180)), 0.4)
+                                        new ParallelRaceGroup(
+                                                new SquiDCommandTimeout(follower, 0.2, 0.2, new SparkFunOTOS.Pose2D(8, 56, Math.toRadians(180)), 0.6),
+                                                new WaitCommand(500)
+                                        )
                                 )
                         ),
+                        new FraudInstantCommand(()->turret.setOffset(3)),
                         new ParallelCommandGroup(
                                 new SequentialCommandGroup(
+                                        new WaitCommand(600),
                                         new IntakeCommand(intake, Intake.lockedPosition, 0)
                                 ),
                                 new SquiDCommandTimeout(follower, 10,2, new SparkFunOTOS.Pose2D(50, 80, Math.PI), 0.25)
                         ),
                         new IntakeCommand(intake, Intake.lockedPosition, 1),
-                        new FraudInstantCommand(()->turretFlag = true),
-                        new WaitCommand(400),
+                        new WaitCommand(500),
                         new FraudInstantCommand(()->{
                             intake.setFlap(Intake.transferPosition);
                             intake.setTransfer(true);
@@ -268,7 +277,8 @@ public class SquiDBlue18 extends OpMode {
                         ),
                         new IntakeCommand(intake, Intake.lockedPosition, 1),
                         new FraudInstantCommand(()->turretFlag = true),
-                        new WaitCommand(400),
+                        new FraudInstantCommand(()->turret.setOffset(4)),
+                        new WaitCommand(500),
                         new FraudInstantCommand(()->{
                             intake.setFlap(Intake.transferPosition);
                             intake.setTransfer(true);
@@ -290,6 +300,8 @@ public class SquiDBlue18 extends OpMode {
         turret.setPose(new Pair<>(33.0, 135.0), 180);
         intake.setFlap(Intake.transferPosition);
 
+        turret.setOffset(3.5);
+
         telemetry = new MultipleTelemetry(FtcDashboard.getInstance().getTelemetry(), telemetry);
 
     }
@@ -308,7 +320,7 @@ public class SquiDBlue18 extends OpMode {
             pinpoint.update();
         }
         if (pinpoint.getLoopTime() > 0) {
-            pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, 35, 135, AngleUnit.RADIANS, Math.PI));
+            pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, 33, 135, AngleUnit.RADIANS, Math.PI));
             follower.setCurrentPose(33, 135, Math.PI);
             if (pinpointReady) {
                 pinpoint.update();
@@ -345,7 +357,7 @@ public class SquiDBlue18 extends OpMode {
 
         meters = turret.distanceToGoal(pose.getX(), pose.getY()) * 0.0254;
 
-        shooter.setTargetRPM(shooter.getRPMForShot(meters) + c);
+        shooter.setTargetRPM(shooter.getRPMForShot(meters) + rpmBost);
         shooter.setHoodAngle(shooter.getHoodAngle(meters));
 
         shooter.runShooterSus();
@@ -364,3 +376,4 @@ public class SquiDBlue18 extends OpMode {
     }
 
 }
+

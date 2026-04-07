@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.opmodes;
+package org.firstinspires.ftc.teamcode.opmodes.v1stuff;
 
 import static org.firstinspires.ftc.teamcode.tests.ShotAlgTest.c;
 

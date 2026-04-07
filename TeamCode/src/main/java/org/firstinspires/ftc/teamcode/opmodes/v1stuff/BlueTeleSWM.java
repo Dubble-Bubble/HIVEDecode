@@ -1,4 +1,4 @@
-package org.firstinspires.ftc.teamcode.opmodes;
+package org.firstinspires.ftc.teamcode.opmodes.v1stuff;
 
 import static org.firstinspires.ftc.teamcode.tests.ShotAlgTest.c;
 
@@ -131,7 +131,6 @@ public class BlueTeleSWM extends OpMode {
             System.out.println("HoodAngle: ");
             System.out.println(hoodAngle);
 
-            shooter.updateFancyKinematics(meters, Math.toRadians(hoodAngle));
 
             if (!Double.isNaN(shooter.getTof())) {
                 weight = shooter.getTof() + (0.3);

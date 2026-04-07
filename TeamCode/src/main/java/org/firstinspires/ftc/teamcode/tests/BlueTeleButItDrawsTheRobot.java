@@ -1,12 +1,12 @@
-package org.firstinspires.ftc.teamcode.opmodes;
-
-import static org.firstinspires.ftc.teamcode.tests.ShotAlgTest.c;
+package org.firstinspires.ftc.teamcode.tests;
 
 import android.util.Pair;
 
 import com.acmerobotics.dashboard.FtcDashboard;
+import com.acmerobotics.dashboard.canvas.Canvas;
 import com.acmerobotics.dashboard.config.Config;
 import com.acmerobotics.dashboard.telemetry.MultipleTelemetry;
+import com.acmerobotics.dashboard.telemetry.TelemetryPacket;
 import com.arcrobotics.ftclib.gamepad.GamepadEx;
 import com.arcrobotics.ftclib.gamepad.GamepadKeys;
 import com.qualcomm.hardware.gobilda.GoBildaPinpointDriver;
@@ -17,17 +17,15 @@ import com.qualcomm.robotcore.util.ElapsedTime;
 import org.firstinspires.ftc.robotcore.external.navigation.AngleUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.DistanceUnit;
 import org.firstinspires.ftc.robotcore.external.navigation.Pose2D;
-import org.firstinspires.ftc.robotcore.external.navigation.Pose3D;
-import org.firstinspires.ftc.teamcode.opmodes.v1stuff.PurpleAutoLimelight;
 import org.firstinspires.ftc.teamcode.systems.Drivebase;
 import org.firstinspires.ftc.teamcode.systems.Intake;
 import org.firstinspires.ftc.teamcode.systems.PinpointConstants;
 import org.firstinspires.ftc.teamcode.systems.Shooter;
 import org.firstinspires.ftc.teamcode.systems.Turret;
 
-@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "Red Teleop")
+@com.qualcomm.robotcore.eventloop.opmode.TeleOp(name = "Blue Teleop")
 @Config
-public class RedTele extends OpMode {
+public class BlueTeleButItDrawsTheRobot extends OpMode {
 
     private Drivebase drivebase; private Intake intake; private Shooter shooter; private Turret turret;
     public static double offset = 4, farOffset = -4.5, farTransferRate = 0.57, vcWeight = 0, farRPM = 4500, farHood = 45;
@@ -56,9 +54,9 @@ public class RedTele extends OpMode {
         pinpoint = hardwareMap.get(GoBildaPinpointDriver.class, "pinpoint");
 
         PinpointConstants.initializePinpoint(pinpoint);
-        pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, 48, 72, AngleUnit.RADIANS, -Math.PI));
+        pinpoint.setPosition(new Pose2D(DistanceUnit.INCH, 0, 0, AngleUnit.RADIANS, 0));
 
-        turret = new Turret(hardwareMap, true);
+        turret = new Turret(hardwareMap, false);
 
 //        limelight3A = hardwareMap.get(Limelight3A.class, "ll3a");
 //        limelight3A.setPollRateHz(250);
@@ -148,6 +146,8 @@ public class RedTele extends OpMode {
         telemetry.addData("pose y", yPos);
         telemetry.addData("heading", Math.toDegrees(heading));
 
+        drawRobot(xPos, yPos, heading);
+
         if (gamepad2.left_bumper && !turretIncrPressed) {
             turret.incrementOffset(true);
         } else if (gamepad2.right_bumper && !turretIncrPressed) {
@@ -159,5 +159,39 @@ public class RedTele extends OpMode {
         turret.update();
 
         looptime = looptimer.milliseconds();
+    }
+
+    public static void drawRobot(double x, double y, double heading) {
+        // Create telemetry packet
+        TelemetryPacket packet = new TelemetryPacket();
+        Canvas canvas = packet.fieldOverlay();
+
+        // Robot dimensions (inches)
+        double robotWidth = 18;
+        double robotLength = 18;
+
+        // Draw robot body (centered at x, y)
+        canvas.setStroke("blue");
+        canvas.strokeRect(
+                x - robotLength / 2,
+                y - robotWidth / 2,
+                robotLength,
+                robotWidth
+        );
+
+        // Draw heading arrow
+        double arrowLength = 10;
+        double x2 = x + arrowLength * Math.cos(heading);
+        double y2 = y + arrowLength * Math.sin(heading);
+
+        canvas.setStroke("red");
+        canvas.strokeLine(x, y, x2, y2);
+
+        // Draw center point
+        canvas.setFill("black");
+        canvas.fillCircle(x, y, 1);
+
+        // Send to dashboard
+        FtcDashboard.getInstance().sendTelemetryPacket(packet);
     }
 }

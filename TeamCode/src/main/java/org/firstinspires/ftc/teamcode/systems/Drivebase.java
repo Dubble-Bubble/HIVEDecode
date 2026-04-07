@@ -13,6 +13,8 @@ public class Drivebase {
     private double xIn, yIn, zIn, normalizer;
 
     public static DcMotor.ZeroPowerBehavior zeroPowerBehavior = DcMotor.ZeroPowerBehavior.BRAKE;
+    public static DcMotorSimple.Direction flDirection = DcMotorSimple.Direction.FORWARD, frDirection = DcMotorSimple.Direction.REVERSE,
+    blDirection = DcMotorSimple.Direction.FORWARD, brDirection = DcMotorSimple.Direction.REVERSE;
 
     private boolean tele = false;
 
@@ -27,8 +29,10 @@ public class Drivebase {
         fR.setZeroPowerBehavior(zeroPowerBehavior);
         bR.setZeroPowerBehavior(zeroPowerBehavior);
 
-        fL.setDirection(DcMotorSimple.Direction.REVERSE);
-        bL.setDirection(DcMotorSimple.Direction.REVERSE);
+        fL.setDirection(flDirection);
+        bL.setDirection(blDirection);
+        bR.setDirection(brDirection);
+        fR.setDirection(frDirection);
 
         this.tele = tele;
     }
